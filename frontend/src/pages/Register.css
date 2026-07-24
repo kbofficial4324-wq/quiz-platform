@@ -1,0 +1,248 @@
+body{
+    margin:0;
+    font-family:"Segoe UI",sans-serif;
+}
+
+.register-page{
+
+    min-height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:linear-gradient(
+        -45deg,
+        #10b981,
+        #06b6d4,
+        #3b82f6,
+        #8b5cf6
+    );
+
+    background-size:400% 400%;
+
+    animation:bgMove 12s ease infinite;
+
+}
+
+.register-card{
+
+    width:440px;
+
+    padding:40px;
+
+    border-radius:25px;
+
+    background:rgba(255,255,255,.18);
+
+    backdrop-filter:blur(18px);
+
+    box-shadow:0 20px 40px rgba(0,0,0,.30);
+
+    animation:slideUp .8s ease;
+
+}
+
+.register-icon{
+
+    text-align:center;
+
+    font-size:70px;
+
+    animation:bounce 2s infinite;
+
+}
+
+.register-title{
+
+    color:white;
+
+    text-align:center;
+
+    margin-top:10px;
+
+    font-weight:bold;
+
+}
+
+.register-subtitle{
+
+    text-align:center;
+
+    color:#f1f5f9;
+
+    margin-bottom:30px;
+
+}
+
+.custom-input{
+
+    height:52px;
+
+    border-radius:30px;
+
+    border:none;
+
+    padding-left:20px;
+
+    transition:.3s;
+
+}
+
+.custom-input:focus{
+
+    transform:scale(1.03);
+
+    box-shadow:0 0 15px rgba(255,255,255,.6);
+
+}
+
+.password-toggle{
+
+    position:absolute;
+
+    right:18px;
+
+    top:13px;
+
+    cursor:pointer;
+
+    font-size:20px;
+
+}
+
+.register-button{
+
+    width:100%;
+
+    height:52px;
+
+    border:none;
+
+    border-radius:30px;
+
+    background:white;
+
+    color:#10b981;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    transition:.3s;
+
+}
+
+.register-button:hover{
+
+    background:#10b981;
+
+    color:white;
+
+    transform:translateY(-5px);
+
+    box-shadow:0 12px 25px rgba(0,0,0,.30);
+
+}
+
+.register-button:disabled{
+
+    opacity:.7;
+
+    cursor:not-allowed;
+
+}
+
+.login-link{
+
+    margin-top:25px;
+
+    text-align:center;
+
+    color:white;
+
+}
+
+.login-link a{
+
+    margin-left:8px;
+
+    color:#fde68a;
+
+    text-decoration:none;
+
+    font-weight:bold;
+
+}
+
+.login-link a:hover{
+
+    text-decoration:underline;
+
+}
+
+@keyframes bgMove{
+
+    0%{
+        background-position:0% 50%;
+    }
+
+    50%{
+        background-position:100% 50%;
+    }
+
+    100%{
+        background-position:0% 50%;
+    }
+
+}
+
+@keyframes slideUp{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(60px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+@keyframes bounce{
+
+    0%,100%{
+
+        transform:translateY(0);
+
+    }
+
+    50%{
+
+        transform:translateY(-10px);
+
+    }
+
+}
+
+@media(max-width:500px){
+
+.register-card{
+
+    width:90%;
+
+    padding:30px;
+
+}
+
+}

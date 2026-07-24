@@ -1,0 +1,303 @@
+.navbar-custom {
+
+    background: linear-gradient(
+        135deg,
+        #667eea,
+        #764ba2
+    );
+
+    padding: 15px 0;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+
+    animation: slideDown 0.8s ease;
+
+}
+
+
+.nav-container {
+
+    width: 90%;
+
+    margin: auto;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+
+
+.brand {
+
+    text-decoration:none;
+
+}
+
+
+.brand h1 {
+
+    color:white;
+
+    font-size:32px;
+
+    font-weight:700;
+
+    letter-spacing:2px;
+
+    margin:0;
+
+    animation: glow 2s infinite alternate;
+
+}
+
+
+
+.nav-buttons {
+
+    display:flex;
+
+    gap:15px;
+
+}
+
+
+
+.nav-btn {
+
+    text-decoration:none;
+
+    padding:10px 25px;
+
+    border-radius:30px;
+
+    color:white;
+
+    font-weight:600;
+
+    transition:all 0.3s ease;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+
+
+.admin-btn {
+
+    background:#ff9800;
+
+}
+
+
+
+.student-btn {
+
+    background:#00c853;
+
+}
+
+
+
+/* Hover animation */
+
+.nav-btn:hover {
+
+    transform:translateY(-5px) scale(1.05);
+
+    box-shadow:0 10px 20px rgba(0,0,0,0.3);
+
+}
+
+
+
+/* Click effect */
+
+.nav-btn:active {
+
+    transform:scale(0.95);
+
+}
+
+
+
+/* Logo animation */
+
+@keyframes glow {
+
+    from {
+
+        text-shadow:
+        0 0 5px white;
+
+    }
+
+    to {
+
+        text-shadow:
+        0 0 20px #fff,
+        0 0 30px #ffd700;
+
+    }
+
+}
+
+
+
+/* Navbar entry animation */
+
+@keyframes slideDown {
+
+    from {
+
+        transform:translateY(-100%);
+
+        opacity:0;
+
+    }
+
+    to {
+
+        transform:translateY(0);
+
+        opacity:1;
+
+    }
+
+}
+
+
+
+/* Mobile responsive */
+
+@media(max-width:768px){
+
+    .nav-container{
+
+        flex-direction:column;
+
+        gap:15px;
+
+    }
+
+
+    .brand h1{
+
+        font-size:26px;
+
+    }
+
+}
+/* Brand Logo */
+
+.brand-logo{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    text-decoration:none;
+
+}
+
+.brand-icon{
+
+    width:60px;
+
+    height:60px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:32px;
+
+    background:linear-gradient(
+        135deg,
+        #f59e0b,
+        #ef4444
+    );
+
+    color:white;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+
+    animation:rotateIcon 4s linear infinite;
+
+}
+
+.brand-title{
+
+    display:block;
+
+    font-size:34px;
+
+    font-weight:800;
+
+    letter-spacing:1px;
+
+    background:linear-gradient(
+        90deg,
+        #ffffff,
+        #facc15,
+        #ffffff
+    );
+
+    background-size:200%;
+
+    -webkit-background-clip:text;
+
+    -webkit-text-fill-color:transparent;
+
+    animation:shine 4s linear infinite;
+
+}
+
+.brand-subtitle{
+
+    display:block;
+
+    color:#dbeafe;
+
+    font-size:13px;
+
+    letter-spacing:2px;
+
+    text-transform:uppercase;
+
+}
+
+@keyframes shine{
+
+0%{
+background-position:0%;
+}
+
+100%{
+background-position:200%;
+}
+
+}
+
+@keyframes rotateIcon{
+
+0%{
+transform:rotate(0deg);
+}
+
+100%{
+transform:rotate(360deg);
+}
+
+}

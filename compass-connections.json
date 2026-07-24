@@ -1,0 +1,56 @@
+{
+  "type": "Compass Connections",
+  "version": {
+    "$numberInt": "1"
+  },
+  "connections": [
+    {
+      "id": "4fc28dd3-e6fc-477f-954f-3a0c3f1c5cc3",
+      "lastUsed": {
+        "$date": {
+          "$numberLong": "1784477742480"
+        }
+      },
+      "favorite": {
+        "name": ""
+      },
+      "savedConnectionType": "recent",
+      "connectionOptions": {
+        "connectionString": "mongodb://localhost:27017/",
+        "oidc": {}
+      }
+    },
+    {
+      "id": "ad977de4-9ad1-49ae-80e0-44b06010482c",
+      "lastUsed": {
+        "$date": {
+          "$numberLong": "1784519782843"
+        }
+      },
+      "favorite": {
+        "name": "quiz platform"
+      },
+      "savedConnectionType": "recent",
+      "connectionOptions": {
+        "connectionString": "mongodb://localhost:27017/",
+        "oidc": {}
+      }
+    },
+    {
+      "id": "b2361069-47df-4f32-ab66-2a6e360177fd",
+      "lastUsed": {
+        "$date": {
+          "$numberLong": "1784519740915"
+        }
+      },
+      "favorite": {
+        "name": "127.0.0.1:27017"
+      },
+      "savedConnectionType": "recent",
+      "connectionOptions": {
+        "connectionString": "mongodb://127.0.0.1:27017/",
+        "oidc": {}
+      }
+    }
+  ]
+}

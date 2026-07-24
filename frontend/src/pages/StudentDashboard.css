@@ -1,0 +1,304 @@
+body{
+    margin:0;
+    font-family:"Segoe UI",sans-serif;
+}
+
+.student-page{
+
+    min-height:100vh;
+
+    background:linear-gradient(
+        -45deg,
+        #2563eb,
+        #38bdf8,
+        #06b6d4,
+        #7c3aed
+    );
+
+    background-size:400% 400%;
+
+    animation:bgMove 12s ease infinite;
+
+}
+
+.dashboard-header{
+
+    text-align:center;
+
+    color:white;
+
+    margin-bottom:50px;
+
+    animation:fadeDown .8s;
+
+}
+
+.dashboard-header h1{
+
+    font-size:50px;
+
+    font-weight:bold;
+
+}
+
+.dashboard-header p{
+
+    font-size:20px;
+
+    opacity:.9;
+
+}
+
+.quiz-card{
+
+    background:rgba(255,255,255,.18);
+
+    backdrop-filter:blur(18px);
+
+    border-radius:25px;
+
+    padding:30px;
+
+    text-align:center;
+
+    color:rgb(11, 11, 11);
+
+    transition:.35s;
+
+    box-shadow:0 20px 35px rgba(0,0,0,.25);
+
+    animation:fadeUp .8s;
+
+}
+
+.quiz-card:hover{
+
+    transform:translateY(-10px);
+
+    box-shadow:0 25px 45px rgba(0,0,0,.35);
+
+}
+
+.quiz-icon{
+
+    font-size:60px;
+
+    margin-bottom:20px;
+
+    animation:float 3s infinite;
+
+}
+
+.quiz-card h3{
+
+    font-weight:bold;
+
+    margin-bottom:20px;
+
+    font-size:28px;
+
+    line-height:1.4;
+
+    word-break:break-word;
+
+    overflow-wrap:anywhere;
+
+    white-space:normal;
+
+    min-height:80px;
+
+}
+
+
+
+.quiz-card p{
+
+    font-size:18px;
+
+}
+
+.quiz-card span{
+
+    display:block;
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    margin-top:10px;
+
+    color:#fde047;
+
+}
+
+.start-btn{
+
+    width:100%;
+
+    padding:16px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:linear-gradient(
+        90deg,
+        #2563eb,
+        #06b6d4
+    );
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:all .3s ease;
+
+    box-shadow:0 8px 20px rgba(37,99,235,.35);
+
+}
+
+.start-btn:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:0 15px 30px rgba(37,99,235,.45);
+
+    background:linear-gradient(
+        90deg,
+        #1d4ed8,
+        #0891b2
+    );
+
+}
+
+.start-btn:active{
+
+    transform:scale(.97);
+
+}
+
+.start-btn:focus{
+
+    outline:none;
+
+}
+
+.start-btn:hover{
+
+    background:#2563eb;
+
+    color:white;
+
+    transform:scale(1.05);
+
+}
+
+.empty-card{
+
+    max-width:500px;
+
+    margin:auto;
+
+    text-align:center;
+
+    background:rgb(28, 27, 27);
+
+    border-radius:20px;
+
+    padding:40px;
+
+    box-shadow:0 15px 30px rgba(0,0,0,.2);
+
+}
+
+@keyframes bgMove{
+
+0%{
+background-position:0% 50%;
+}
+
+50%{
+background-position:100% 50%;
+}
+
+100%{
+background-position:0% 50%;
+}
+
+}
+
+@keyframes fadeDown{
+
+from{
+
+opacity:0;
+
+transform:translateY(-40px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+@keyframes fadeUp{
+
+from{
+
+opacity:0;
+
+transform:translateY(50px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+@keyframes float{
+
+0%,100%{
+
+transform:translateY(0);
+
+}
+
+50%{
+
+transform:translateY(-10px);
+
+}
+
+}
+
+@media(max-width:768px){
+
+.dashboard-header h1{
+
+font-size:35px;
+
+}
+
+.quiz-card{
+
+padding:25px;
+
+}
+
+}

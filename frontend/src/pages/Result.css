@@ -1,0 +1,357 @@
+body{
+
+    margin:0;
+
+    font-family:"Segoe UI",sans-serif;
+
+}
+
+.result-page{
+
+    min-height:100vh;
+
+    background:linear-gradient(
+        -45deg,
+        #dbeafe,
+        #eff6ff,
+        #bfdbfe,
+        #dbeafe
+    );
+
+    background-size:400% 400%;
+
+    animation:bgMove 12s ease infinite;
+
+}
+
+.result-card{
+
+    width:700px;
+
+    max-width:100%;
+
+    margin:auto;
+
+    background:white;
+
+    border-radius:25px;
+
+    padding:40px;
+
+    text-align:center;
+
+    box-shadow:0 20px 40px rgba(0,0,0,.15);
+
+    animation:slideUp .8s;
+
+}
+
+.trophy{
+
+    font-size:70px;
+
+    animation:bounce 2s infinite;
+
+}
+
+.result-title{
+
+    color:#1d4ed8;
+
+    margin-top:10px;
+
+}
+
+.score-circle{
+
+    width:180px;
+
+    height:180px;
+
+    margin:30px auto;
+
+    border-radius:50%;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #06b6d4
+    );
+
+    color:white;
+
+    animation:zoom .7s;
+
+}
+
+.score-circle h1{
+
+    font-size:60px;
+
+    margin:0;
+
+}
+
+.score-circle span{
+
+    font-size:22px;
+
+}
+
+.percentage{
+
+    color:#2563eb;
+
+    font-weight:bold;
+
+}
+
+.status{
+
+    display:inline-block;
+
+    padding:12px 35px;
+
+    border-radius:40px;
+
+    color:white;
+
+    font-size:22px;
+
+    margin-top:20px;
+
+}
+
+.success{
+
+    background:#16a34a;
+
+}
+
+.fail{
+
+    background:#dc2626;
+
+}
+
+.answer-card{
+
+    background:white;
+
+    border-radius:20px;
+
+    border:none;
+
+    box-shadow:0 12px 25px rgba(0,0,0,.12);
+
+    transition:.3s;
+
+    animation:fadeUp .6s;
+
+}
+
+.answer-card:hover{
+
+    transform:translateY(-6px);
+
+}
+
+.result-btn{
+
+    border:none;
+
+    padding:15px 35px;
+
+    border-radius:40px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:white;
+
+    transition:.3s;
+
+}
+
+.retry-btn{
+
+    background:#0d6efd;
+
+}
+
+.home-btn{
+
+    background:#16a34a;
+
+}
+
+.result-btn:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 15px 30px rgba(0,0,0,.2);
+
+}
+
+@keyframes bgMove{
+
+0%{
+background-position:0% 50%;
+}
+
+50%{
+background-position:100% 50%;
+}
+
+100%{
+background-position:0% 50%;
+}
+
+}
+
+@keyframes slideUp{
+
+from{
+
+opacity:0;
+
+transform:translateY(50px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+@keyframes fadeUp{
+
+from{
+
+opacity:0;
+
+transform:translateY(25px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+@keyframes bounce{
+
+0%,100%{
+
+transform:translateY(0);
+
+}
+
+50%{
+
+transform:translateY(-10px);
+
+}
+
+}
+
+@keyframes zoom{
+
+from{
+
+transform:scale(.5);
+
+opacity:0;
+
+}
+
+to{
+
+transform:scale(1);
+
+opacity:1;
+
+}
+
+}
+
+@media(max-width:768px){
+
+.result-card{
+
+padding:25px;
+
+}
+
+.score-circle{
+
+width:140px;
+
+height:140px;
+
+}
+
+.score-circle h1{
+
+font-size:45px;
+
+}
+
+.result-btn{
+
+width:100%;
+
+margin-top:15px;
+
+}
+
+}
+/* Review Section */
+
+.review-section{
+
+    max-width:1100px;
+
+    margin:60px auto;
+
+    padding:0 40px;
+
+}
+
+.review-section h2{
+
+    margin-bottom:45px;
+
+}
+.answer-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+
+    height: auto;
+    min-height: 180px;
+
+    position: relative;
+    overflow: visible;
+}
