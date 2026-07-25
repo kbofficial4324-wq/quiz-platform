@@ -27,14 +27,13 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
+      "https://quiz-platform-frontend-tjbw.onrender.com",
       "https://quiz-platform-five-omega.vercel.app",
       "https://quiz-platform-mauve-theta.vercel.app",
     ],
     credentials: true,
   })
 );
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
