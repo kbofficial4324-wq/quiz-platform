@@ -8,25 +8,25 @@ export const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // Check all fields
+    // Validate input
     if (!name || !email || !password) {
       return res.status(400).json({
+        success: false,
         message: "Please fill all fields",
       });
     }
 
-    // Check if email already exists
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json({
+        success: false,
         message: "Email already exists",
       });
     }
 
-    // Hash password
-
-    // Create new user
+    // Create user (Plain Text Password)
     const user = await User.create({
       name,
       email,
@@ -35,6 +35,7 @@ export const register = async (req, res) => {
     });
 
     res.status(201).json({
+      success: true,
       message: "Registration successful",
       user: {
         id: user._id,
@@ -45,7 +46,10 @@ export const register = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("Register Error:", err);
+
     res.status(500).json({
+      success: false,
       message: err.message,
     });
   }
@@ -56,26 +60,41 @@ export const register = async (req, res) => {
 // ======================
 export const login = async (req, res) => {
   try {
-
     const { email, password } = req.body;
+
+    console.log("================================");
+    console.log("Login Request Received");
+    console.log("Email:", email);
 
     // Find user
     const user = await User.findOne({ email });
 
     if (!user) {
+      console.log("User not found");
+
       return res.status(400).json({
+        success: false,
         message: "Invalid email or password",
       });
     }
 
-    // Compare password
-   if (password !== user.password) {
-    return res.status(400).json({
-        message: "Invalid credentials"
-    });
-}
+    console.log("User Found:", user.email);
+    console.log("Entered Password:", password);
+    console.log("Database Password:", user.password);
 
-    // Create JWT token
+    // Compare Plain Password
+    if (password !== user.password) {
+      console.log("Password mismatch");
+
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    console.log("Password matched");
+
+    // Create JWT
     const token = jwt.sign(
       {
         id: user._id,
@@ -87,11 +106,12 @@ export const login = async (req, res) => {
       }
     );
 
-    res.json({
+    console.log("Login Successful");
+
+    res.status(200).json({
+      success: true,
       message: "Login successful",
-
       token,
-
       user: {
         id: user._id,
         name: user.name,
@@ -101,7 +121,10 @@ export const login = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("Login Error:", err);
+
     res.status(500).json({
+      success: false,
       message: err.message,
     });
   }
@@ -117,14 +140,21 @@ export const getProfile = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
+        success: false,
         message: "User not found",
       });
     }
 
-    res.json(user);
+    res.status(200).json({
+      success: true,
+      user,
+    });
 
   } catch (err) {
+    console.error("Profile Error:", err);
+
     res.status(500).json({
+      success: false,
       message: err.message,
     });
   }
