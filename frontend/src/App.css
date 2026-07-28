@@ -1,99 +1,839 @@
+/* ===================================================
+   GLOBAL
+=================================================== */
+
 *{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Arial, Helvetica, sans-serif;
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    font-family:"Segoe UI",sans-serif;
+
 }
 
 body{
-  background:#f4f7fc;
+
+   background:
+radial-gradient(circle at top left,#7f1d1d,#020617 45%),
+linear-gradient(135deg,#020617,#111827);
+
+    color:white;
+
+    overflow-x:hidden;
+
 }
+
+
+
+/* ===================================================
+   CONTAINER
+=================================================== */
 
 .container{
-  width:90%;
-  max-width:1200px;
-  margin:auto;
+
+    width:92%;
+
+    max-width:1300px;
+
+    margin:auto;
+
 }
+
+
+
+/* ===================================================
+   NAVBAR
+=================================================== */
 
 .navbar{
-  background:#2563eb;
-  color:white;
-  padding:15px 30px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+
+    position:sticky;
+
+    top:0;
+
+    z-index:1000;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:20px 40px;
+
+    background:rgba(15,23,42,.75);
+
+    backdrop-filter:blur(18px);
+
+    border-bottom:
+
+    1px solid rgba(255,255,255,.08);
+
 }
 
+
+
+/* Logo */
+
 .logo{
-  font-size:28px;
-  font-weight:bold;
+
+    font-size:30px;
+
+    font-weight:800;
+
+    background:
+
+    linear-gradient(
+
+        90deg,
+
+        #ffffff,
+
+        #38bdf8,
+
+        #8b5cf6
+
+    );
+
+    -webkit-background-clip:text;
+
+    -webkit-text-fill-color:transparent;
+
+}
+
+
+
+/* Navigation */
+
+.nav-links{
+
+    display:flex;
+
+    gap:25px;
+
 }
 
 .nav-links a{
-  color:white;
-  text-decoration:none;
-  margin-left:20px;
-  font-size:18px;
+
+    color:#cbd5e1;
+
+    text-decoration:none;
+
+    font-size:17px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+    position:relative;
+
 }
+
+.nav-links a:hover{
+
+    color:#38bdf8;
+
+}
+
+
+
+/* Animated Underline */
+
+.nav-links a::after{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    bottom:-6px;
+
+    width:0;
+
+    height:2px;
+
+    background:#38bdf8;
+
+    transition:.3s;
+
+}
+
+.nav-links a:hover::after{
+
+    width:100%;
+
+}
+
+
+
+/* ===================================================
+   HERO
+=================================================== */
 
 .hero{
-  text-align:center;
-  margin-top:80px;
+
+    position:relative;
+
+    text-align:center;
+
+    padding:120px 0;
+
+    animation:heroFade .8s ease;
+
 }
 
+
+
+/* Background Glow */
+
+.hero::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:700px;
+
+    height:700px;
+
+    background:
+
+    rgba(59,130,246,.18);
+
+    border-radius:50%;
+
+    filter:blur(150px);
+
+    left:50%;
+
+    top:40%;
+
+    transform:translate(-50%,-50%);
+
+    animation:pulseGlow 8s infinite alternate;
+
+}
+
+
+
+/* Heading */
+
 .hero h1{
-  font-size:55px;
-  color:#2563eb;
+
+    position:relative;
+
+    z-index:2;
+
+    font-size:64px;
+
+    font-weight:800;
+
+    background:
+
+    linear-gradient(
+
+        90deg,
+
+        white,
+
+        #38bdf8,
+
+        #8b5cf6
+
+    );
+
+    background-size:250%;
+
+    -webkit-background-clip:text;
+
+    -webkit-text-fill-color:transparent;
+
+    animation:gradientMove 8s linear infinite;
+
+}
+
+
+
+/* Paragraph */
+
+.hero p{
+
+    position:relative;
+
+    z-index:2;
+
+    margin-top:25px;
+
+    color:#94a3b8;
+
+    font-size:21px;
+
+    line-height:1.8;
+
+    max-width:850px;
+
+    margin-inline:auto;
+
+}
+
+
+
+/* ===================================================
+   BUTTONS
+=================================================== */
+
+.buttons{
+
+    margin-top:45px;
+
+    display:flex;
+
+    justify-content:center;
+
+    flex-wrap:wrap;
+
+    gap:18px;
+
+}
+
+
+
+.btn{
+
+    position:relative;
+
+    overflow:hidden;
+
+    padding:16px 38px;
+
+    border:none;
+
+    border-radius:18px;
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    background:
+
+    linear-gradient(
+
+        135deg,
+
+        #2563eb,
+
+        #06b6d4
+
+    );
+
+    transition:.35s;
+
+    box-shadow:
+
+    0 18px 35px rgba(37,99,235,.35);
+
+}
+
+
+
+.btn:hover{
+
+    transform:
+
+    translateY(-5px)
+
+    scale(1.03);
+
+    box-shadow:
+
+    0 25px 45px rgba(37,99,235,.45);
+
+}
+
+
+
+/* Shine Effect */
+
+.btn::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+
+    left:-100%;
+
+    width:100%;
+
+    height:100%;
+
+    background:
+
+    linear-gradient(
+
+        90deg,
+
+        transparent,
+
+        rgba(255,255,255,.4),
+
+        transparent
+
+    );
+
+    transition:.7s;
+
+}
+
+
+
+.btn:hover::before{
+
+    left:120%;
+
+}
+/* ===================================================
+   FORM CONTAINER
+=================================================== */
+
+.form-container{
+
+    position:relative;
+
+    width:420px;
+
+    margin:80px auto;
+
+    padding:45px;
+
+    border-radius:28px;
+
+    background:rgba(255,255,255,.05);
+
+    backdrop-filter:blur(20px);
+
+    border:1px solid rgba(255,255,255,.10);
+
+    box-shadow:
+    0 25px 60px rgba(0,0,0,.45);
+
+    animation:cardFade .8s ease;
+
+    overflow:hidden;
+
+}
+
+
+
+/* Animated Border */
+
+.form-container::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:-2px;
+
+    border-radius:28px;
+
+    background:
+    linear-gradient(
+        90deg,
+        #38bdf8,
+        #2563eb,
+        #8b5cf6,
+        #06b6d4,
+        #38bdf8
+    );
+
+    background-size:350%;
+
+    animation:borderMove 8s linear infinite;
+
+    z-index:-2;
+
+}
+
+
+
+/* Inner Layer */
+
+.form-container::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:2px;
+
+    border-radius:26px;
+
+    background:#0f172a;
+
+    z-index:-1;
+
+}
+
+
+
+/* ===================================================
+   FORM TITLE
+=================================================== */
+
+.form-container h2{
+
+    text-align:center;
+
+    margin-bottom:35px;
+
+    font-size:32px;
+
+    font-weight:800;
+
+    background:
+    linear-gradient(
+        90deg,
+        white,
+        #38bdf8,
+        #8b5cf6
+    );
+
+    -webkit-background-clip:text;
+
+    -webkit-text-fill-color:transparent;
+
+}
+
+
+
+/* ===================================================
+   INPUTS
+=================================================== */
+
+.form-container input{
+
+    width:100%;
+
+    height:56px;
+
+    margin:12px 0;
+
+    padding:0 18px;
+
+    border-radius:16px;
+
+    border:1px solid rgba(255,255,255,.10);
+
+    background:rgba(255,255,255,.05);
+
+    color:white;
+
+    font-size:16px;
+
+    transition:.35s;
+
+}
+
+
+
+.form-container input::placeholder{
+
+    color:#94a3b8;
+
+}
+
+
+
+.form-container input:focus{
+
+    outline:none;
+
+    border-color:#38bdf8;
+
+    background:rgba(255,255,255,.08);
+
+    box-shadow:
+    0 0 20px rgba(56,189,248,.35);
+
+}
+
+
+
+/* ===================================================
+   BUTTON
+=================================================== */
+
+.form-container button{
+
+    width:100%;
+
+    height:56px;
+
+    margin-top:22px;
+
+    border:none;
+
+    border-radius:18px;
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    background:
+    linear-gradient(
+        135deg,
+        #2563eb,
+        #06b6d4
+    );
+
+    transition:.35s;
+
+    box-shadow:
+    0 18px 35px rgba(37,99,235,.35);
+
+}
+
+
+
+.form-container button:hover{
+
+    transform:
+    translateY(-4px)
+    scale(1.02);
+
+    box-shadow:
+    0 25px 45px rgba(37,99,235,.45);
+
+}
+
+
+
+.form-container button:active{
+
+    transform:scale(.98);
+
+}
+
+
+
+/* ===================================================
+   ANIMATIONS
+=================================================== */
+
+@keyframes heroFade{
+
+from{
+
+opacity:0;
+
+transform:translateY(40px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:none;
+
+}
+
+}
+
+
+
+@keyframes cardFade{
+
+from{
+
+opacity:0;
+
+transform:translateY(50px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:none;
+
+}
+
+}
+
+
+
+@keyframes gradientMove{
+
+0%{
+
+background-position:0%;
+
+}
+
+100%{
+
+background-position:250%;
+
+}
+
+}
+
+
+
+@keyframes pulseGlow{
+
+from{
+
+transform:translate(-50%,-50%) scale(.9);
+
+opacity:.6;
+
+}
+
+to{
+
+transform:translate(-50%,-50%) scale(1.2);
+
+opacity:1;
+
+}
+
+}
+
+
+
+@keyframes borderMove{
+
+0%{
+
+background-position:0%;
+
+}
+
+100%{
+
+background-position:350%;
+
+}
+
+}
+
+
+
+/* ===================================================
+   RESPONSIVE
+=================================================== */
+
+@media(max-width:768px){
+
+.hero h1{
+
+font-size:46px;
+
 }
 
 .hero p{
-  margin-top:20px;
-  font-size:20px;
-  color:#555;
+
+font-size:18px;
+
 }
 
-.buttons{
-  margin-top:40px;
-}
+.navbar{
 
-.btn{
-  background:#2563eb;
-  color:white;
-  border:none;
-  padding:12px 25px;
-  margin:10px;
-  border-radius:8px;
-  cursor:pointer;
-  font-size:18px;
-  transition:.3s;
-}
+padding:18px 25px;
 
-.btn:hover{
-  background:#1d4ed8;
 }
 
 .form-container{
-  width:400px;
-  background:white;
-  margin:80px auto;
-  padding:30px;
-  border-radius:12px;
-  box-shadow:0 5px 15px rgba(0,0,0,.1);
+
+width:90%;
+
+padding:35px;
+
+}
+
+}
+
+
+
+@media(max-width:480px){
+
+.hero{
+
+padding:80px 0;
+
+}
+
+.hero h1{
+
+font-size:34px;
+
+}
+
+.hero p{
+
+font-size:16px;
+
+}
+
+.logo{
+
+font-size:24px;
+
+}
+
+.nav-links{
+
+gap:15px;
+
+}
+
+.nav-links a{
+
+font-size:15px;
+
+}
+
+.buttons{
+
+flex-direction:column;
+
+}
+
+.btn{
+
+width:100%;
+
+}
+
+.form-container{
+
+padding:25px;
+
+border-radius:22px;
+
 }
 
 .form-container h2{
-  text-align:center;
-  margin-bottom:20px;
+
+font-size:26px;
+
 }
 
-.form-container input{
-  width:100%;
-  padding:12px;
-  margin:10px 0;
-  border:1px solid #ccc;
-  border-radius:8px;
-}
-
-.form-container button{
-  width:100%;
 }

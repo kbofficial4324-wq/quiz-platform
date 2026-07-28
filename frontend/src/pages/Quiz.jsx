@@ -11,57 +11,81 @@ import {
   useParams,
 } from "react-router-dom";
 
+import "./Quiz.css";
+
 function Quiz() {
+
   const navigate = useNavigate();
+
   const { quizId } = useParams();
 
+  // ==========================
+  // STATES
+  // ==========================
+
   const [questions, setQuestions] = useState([]);
+
   const [answers, setAnswers] = useState({});
+
   const [currentQuestion, setCurrentQuestion] =
     useState(0);
 
-  // 20 seconds for every question
-  const [timeLeft, setTimeLeft] = useState(20);
+  const QUESTION_TIME = 20;
+
+  const [timeLeft, setTimeLeft] =
+    useState(QUESTION_TIME);
 
   const [submitted, setSubmitted] =
     useState(false);
 
   // ==========================
-  // Load Questions
+  // LOAD QUESTIONS
   // ==========================
 
   useEffect(() => {
+
     axios
-      .get(
-        `http://localhost:5000/api/questions/${quizId}`
-      )
+      .get(`http://localhost:5000/api/questions/${quizId}`)
+
       .then((res) => {
+
         setQuestions(res.data);
+
       })
+
       .catch((err) => {
+
         console.log(err);
+
       });
+
   }, [quizId]);
 
   // ==========================
-  // Save Selected Answer
+  // SAVE ANSWERS
   // ==========================
 
   const handleOptionChange = (
     questionId,
     option
   ) => {
+
     setAnswers((prev) => ({
+
       ...prev,
+
       [questionId]: option,
+
     }));
+
   };
 
   // ==========================
-  // Submit Quiz
+  // SUBMIT QUIZ
   // ==========================
 
   const handleSubmit = useCallback(async () => {
+
     if (submitted) return;
 
     setSubmitted(true);
@@ -69,6 +93,7 @@ function Quiz() {
     let score = 0;
 
     const review = questions.map((q) => {
+
       const studentAnswer =
         answers[q._id] || "Not Answered";
 
@@ -78,36 +103,60 @@ function Quiz() {
       if (isCorrect) score++;
 
       return {
+
         question: q.question,
+
         studentAnswer,
+
         correctAnswer: q.answer,
+
         isCorrect,
+
       };
+
     });
 
     try {
+
       await axios.post(
         "http://localhost:5000/api/results",
         {
+
           studentName: "Demo Student",
+
           quizId,
+
           score,
+
           totalQuestions: questions.length,
+
         }
       );
 
       navigate("/result", {
+
         state: {
+
           score,
+
           total: questions.length,
+
           review,
+
         },
+
       });
+
     } catch (err) {
+
       console.log(err);
+
       alert("Failed to save result.");
+
       setSubmitted(false);
+
     }
+
   }, [
     submitted,
     questions,
@@ -115,215 +164,408 @@ function Quiz() {
     quizId,
     navigate,
   ]);
-    // ==========================
-  // Timer
+
+  // ==========================
+  // TIMER
   // ==========================
 
   useEffect(() => {
-    if (submitted || questions.length === 0) return;
 
-    if (timeLeft === 0) {
-
-      if (currentQuestion === questions.length - 1) {
-        handleSubmit();
-      } else {
-        setCurrentQuestion((prev) => prev + 1);
-        setTimeLeft(20);
-      }
-
+    if (
+      submitted ||
+      questions.length === 0
+    )
       return;
-    }
 
-    const timer = setTimeout(() => {
-      setTimeLeft((prev) => prev - 1);
+    const timer = setInterval(() => {
+
+      setTimeLeft((prev) => {
+
+        if (prev <= 1) {
+
+          clearInterval(timer);
+
+          if (
+            currentQuestion ===
+            questions.length - 1
+          ) {
+
+            handleSubmit();
+
+          } else {
+
+            setCurrentQuestion(
+              (old) => old + 1
+            );
+
+          }
+
+          return QUESTION_TIME;
+
+        }
+
+        return prev - 1;
+
+      });
+
     }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => clearInterval(timer);
 
   }, [
-    timeLeft,
     currentQuestion,
-    submitted,
     questions,
+    submitted,
     handleSubmit,
   ]);
 
-  // Reset timer when question changes
+  // Reset Timer
 
   useEffect(() => {
-    setTimeLeft(20);
+
+    setTimeLeft(QUESTION_TIME);
+
   }, [currentQuestion]);
 
+  // ==========================
+  // LOADING
+  // ==========================
+
   if (questions.length === 0) {
+
     return (
-      <div className="container mt-5 text-center">
+
+      <div className="loading-page">
+
         <h2>Loading Questions...</h2>
+
       </div>
+
     );
+
   }
 
-  const question = questions[currentQuestion];
+  const question =
+    questions[currentQuestion];
+      return (
 
-  return (
+    <div className="quiz-page">
 
-    <div className="container mt-5">
+      <div className="quiz-container">
 
-      {/* Timer */}
+        {/* ==========================
+            HEADER
+        ========================== */}
 
-      <div
-        className={`alert ${
-          timeLeft <= 5
-            ? "alert-danger"
-            : "alert-primary"
-        } text-center`}
-      >
-        <h3>
-          ⏰ Time Left : {timeLeft} sec
-        </h3>
-      </div>
+        <div className="quiz-header">
 
-      {/* Progress */}
+          <div>
 
-      <div className="progress mb-4">
+            <h1 className="quiz-title">
 
-        <div
-          className="progress-bar progress-bar-striped progress-bar-animated"
-          style={{
-            width: `${
-              ((currentQuestion + 1) /
-                questions.length) *
-              100
-            }%`,
-          }}
-        >
-          {currentQuestion + 1} / {questions.length}
+              Think Smart Quiz
+
+            </h1>
+
+            <p className="quiz-subtitle">
+
+              Answer every question before the timer expires
+
+            </p>
+
+          </div>
+
+          {/* Timer */}
+
+          <div
+            className={`timer-circle
+
+            ${timeLeft<=5
+
+              ? "danger"
+
+              : timeLeft<=10
+
+              ? "warning"
+
+              : "safe"
+
+            }`}
+          >
+
+            <span>
+
+              {timeLeft}
+
+            </span>
+
+            <small>SEC</small>
+
+          </div>
+
         </div>
 
-      </div>
+        {/* ==========================
+            PROGRESS
+        ========================== */}
 
-      {/* Question Card */}
+        <div className="progress-wrapper">
 
-      <div className="card shadow-lg">
+          <div className="progress-text">
 
-        <div className="card-body">
+            <span>
 
-          <h5 className="text-primary mb-3">
-            Question {currentQuestion + 1}
-          </h5>
+              Question {currentQuestion + 1}
 
-          <h4 className="mb-4">
-            {question.question}
-          </h4>
+            </span>
 
-          {question.options.map((option, index) => (
+            <span>
+
+              {questions.length}
+
+            </span>
+
+          </div>
+
+          <div className="progress">
 
             <div
-              className="form-check mb-3"
-              key={index}
-            >
 
-              <input
-                type="radio"
-                className="form-check-input"
-                id={`option-${index}`}
-                name={`question-${question._id}`}
-                value={option}
-                checked={
-                  answers[question._id] === option
-                }
-                onChange={(e) =>
-                  handleOptionChange(
-                    question._id,
-                    e.target.value
-                  )
-                }
-              />
+              className="progress-fill"
+
+              style={{
+
+                width: `${((currentQuestion + 1) / questions.length) * 100}%`
+
+              }}
+
+            />
+
+          </div>
+
+        </div>
+
+        {/* ==========================
+            QUESTION CARD
+        ========================== */}
+
+        <div className="question-card">
+
+          <div className="question-number">
+
+            Q{currentQuestion + 1}
+
+          </div>
+
+          <h2 className="question-title">
+
+            {question.question}
+
+          </h2>
+
+          {/* ==========================
+              OPTIONS
+          ========================== */}
+
+          <div className="options">
+
+            {question.options.map((option,index)=>(
 
               <label
-                className="form-check-label"
-                htmlFor={`option-${index}`}
-                style={{
-                  cursor: "pointer",
-                  fontSize: "18px",
-                }}
+
+                key={index}
+
+                className={`option-card
+
+                ${answers[question._id]===option
+
+                ? "selected"
+
+                : ""
+
+                }`}
+
               >
-                {option}
+
+                <input
+
+                  type="radio"
+
+                  name={question._id}
+
+                  value={option}
+
+                  checked={answers[question._id]===option}
+
+                  onChange={(e)=>
+
+                    handleOptionChange(
+
+                      question._id,
+
+                      e.target.value
+
+                    )
+
+                  }
+
+                />
+
+                <span>
+
+                  {option}
+
+                </span>
+
               </label>
 
-            </div>
+            ))}
+
+          </div>
+
+        </div>
+
+        {/* ==========================
+            QUESTION NAVIGATOR
+        ========================== */}
+
+        <div className="question-nav">
+
+          {questions.map((q,index)=>(
+
+            <button
+
+              key={q._id}
+
+              className={`nav-btn
+
+              ${index===currentQuestion
+
+                ? "current"
+
+                : answers[q._id]
+
+                ? "answered"
+
+                : ""
+
+              }`}
+
+              onClick={()=>
+
+                setCurrentQuestion(index)
+
+              }
+
+            >
+
+              {index+1}
+
+            </button>
 
           ))}
-                {/* Question Navigator */}
 
-      <div className="d-flex justify-content-center flex-wrap mt-4 mb-4">
+        </div>
+                {/* ==========================
+            NAVIGATION BUTTONS
+        ========================== */}
 
-        {questions.map((q, index) => (
-
-          <button
-            key={q._id}
-            className={`btn m-1 ${
-              index === currentQuestion
-                ? "btn-primary"
-                : answers[q._id]
-                ? "btn-success"
-                : "btn-outline-secondary"
-            }`}
-            onClick={() => setCurrentQuestion(index)}
-          >
-            {index + 1}
-          </button>
-
-        ))}
-
-      </div>
-
-      {/* Navigation Buttons */}
-
-      <div className="d-flex justify-content-between mt-4">
-
-        <button
-          className="btn btn-secondary"
-          disabled={currentQuestion === 0}
-          onClick={() =>
-            setCurrentQuestion((prev) => prev - 1)
-          }
-        >
-          ◀ Previous
-        </button>
-
-        {currentQuestion === questions.length - 1 ? (
+        <div className="navigation-buttons">
 
           <button
-            className="btn btn-success"
-            onClick={handleSubmit}
-            disabled={submitted}
-          >
-            {submitted
-              ? "Submitting..."
-              : "Submit Quiz"}
-          </button>
 
-        ) : (
+            className="previous-btn"
 
-          <button
-            className="btn btn-primary"
-            onClick={() =>
-              setCurrentQuestion((prev) => prev + 1)
+            disabled={currentQuestion===0}
+
+            onClick={()=>
+
+              setCurrentQuestion(
+
+                currentQuestion-1
+
+              )
+
             }
+
           >
-            Next ▶
+
+            ◀ Previous
+
           </button>
 
-        )}
+          {
+
+            currentQuestion===questions.length-1
+
+            ?
+
+            (
+
+              <button
+
+                className="submit-btn"
+
+                disabled={submitted}
+
+                onClick={handleSubmit}
+
+              >
+
+                {
+
+                  submitted
+
+                  ?
+
+                  "Submitting..."
+
+                  :
+
+                  "Submit Quiz"
+
+                }
+
+              </button>
+
+            )
+
+            :
+
+            (
+
+              <button
+
+                className="next-btn"
+
+                onClick={()=>
+
+                  setCurrentQuestion(
+
+                    currentQuestion+1
+
+                  )
+
+                }
+
+              >
+
+                Next ▶
+
+              </button>
+
+            )
+
+          }
+
+        </div>
 
       </div>
 
     </div>
 
-  </div>
-          </div>
-
   );
+
 }
 
 export default Quiz;

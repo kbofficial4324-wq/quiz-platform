@@ -24,13 +24,22 @@ const app = express();
 // Middleware
 // =========================
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://quiz-platform-frontend-tjbw.onrender.com",
+  "https://quiz-platform-five-omega.vercel.app",
+  "https://quiz-platform-mauve-theta.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "https://quiz-platform-frontend-tjbw.onrender.com",
-      "https://quiz-platform-five-omega.vercel.app",
-      "https://quiz-platform-mauve-theta.vercel.app",
-    ],
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
