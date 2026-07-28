@@ -4,12 +4,9 @@ import React, {
   useCallback,
 } from "react";
 
-import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
 
-import {
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import API from "../services/api";
 
 import "./Quiz.css";
 
@@ -17,9 +14,9 @@ function Quiz() {
   const navigate = useNavigate();
   const { quizId } = useParams();
 
-  // ==========================
+  // ==============================
   // STATES
-  // ==========================
+  // ==============================
 
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
@@ -28,14 +25,16 @@ function Quiz() {
   const QUESTION_TIME = 20;
 
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
+
   const [submitted, setSubmitted] = useState(false);
 
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
 
-  // ==========================
+  // ==============================
   // LOAD QUESTIONS
-  // ==========================
+  // ==============================
 
   useEffect(() => {
     const loadQuestions = async () => {
@@ -43,38 +42,75 @@ function Quiz() {
         setLoading(true);
         setError("");
 
-        console.log("Loading questions for quiz:", quizId);
-
-        const response = await axios.get(
-          `http://localhost:5000/api/questions/${quizId}`
+        console.log(
+          "Loading questions for quiz:",
+          quizId
         );
 
-        console.log("Questions API response:", response.data);
+        // IMPORTANT:
+        // Uses deployed backend through API service
+        const response = await API.get(
+          `/questions/${quizId}`
+        );
 
-        // Handle different possible backend response formats
+        console.log(
+          "Questions API response:",
+          response.data
+        );
+
+        // ==============================
+        // HANDLE RESPONSE
+        // ==============================
+
         let loadedQuestions = response.data;
+
+        // If backend returns:
+        // { questions: [...] }
 
         if (response.data?.questions) {
           loadedQuestions = response.data.questions;
         }
 
+        // ==============================
+        // VALIDATE RESPONSE
+        // ==============================
+
         if (!Array.isArray(loadedQuestions)) {
-          throw new Error("Invalid questions response from server");
+          throw new Error(
+            "Invalid questions response from server"
+          );
         }
 
         if (loadedQuestions.length === 0) {
-          setError("No questions found for this quiz.");
           setQuestions([]);
+          setError(
+            "No questions found for this quiz."
+          );
           return;
         }
 
         setQuestions(loadedQuestions);
+
+        // Reset quiz state
+        setCurrentQuestion(0);
+        setAnswers({});
+        setTimeLeft(QUESTION_TIME);
       } catch (err) {
-        console.error("Question loading error:", err);
+        console.error(
+          "Question loading error:",
+          err
+        );
 
         if (err.response) {
-          console.error("Status:", err.response.status);
-          console.error("Response:", err.response.data);
+          console.error(
+            "Status:",
+            err.response.status
+          );
+
+          console.error(
+            "Response:",
+            err.response.data
+          );
 
           setError(
             err.response.data?.message ||
@@ -82,10 +118,13 @@ function Quiz() {
           );
         } else if (err.request) {
           setError(
-            "Cannot connect to the backend server. Please make sure the backend is running on port 5000."
+            "Cannot connect to the backend server. Please make sure the deployed backend is running."
           );
         } else {
-          setError(err.message || "Failed to load questions.");
+          setError(
+            err.message ||
+              "Failed to load questions."
+          );
         }
       } finally {
         setLoading(false);
@@ -100,26 +139,33 @@ function Quiz() {
     }
   }, [quizId]);
 
-  // ==========================
-  // SAVE ANSWERS
-  // ==========================
+  // ==============================
+  // SAVE ANSWER
+  // ==============================
 
-  const handleOptionChange = (questionId, option) => {
+  const handleOptionChange = (
+    questionId,
+    option
+  ) => {
     setAnswers((prev) => ({
       ...prev,
       [questionId]: option,
     }));
   };
 
-  // ==========================
+  // ==============================
   // SUBMIT QUIZ
-  // ==========================
+  // ==============================
 
   const handleSubmit = useCallback(async () => {
-    if (submitted) return;
+    if (submitted) {
+      return;
+    }
 
     if (questions.length === 0) {
-      alert("There are no questions to submit.");
+      alert(
+        "There are no questions to submit."
+      );
       return;
     }
 
@@ -140,35 +186,75 @@ function Quiz() {
 
       return {
         question: q.question,
+
         studentAnswer,
+
         correctAnswer: q.answer,
+
         isCorrect,
       };
     });
 
     try {
-      await axios.post(
-        "http://localhost:5000/api/results",
+      console.log(
+        "Submitting result..."
+      );
+
+      console.log({
+        studentName: "Demo Student",
+        quizId,
+        score,
+        totalQuestions: questions.length,
+        answers: review,
+      });
+
+      // IMPORTANT:
+      // Uses deployed backend through API service
+      await API.post(
+        "/results",
         {
           studentName: "Demo Student",
+
           quizId,
+
           score,
-          totalQuestions: questions.length,
+
+          totalQuestions:
+            questions.length,
+
           answers: review,
         }
       );
 
+      console.log(
+        "Result saved successfully."
+      );
+
+      // ==============================
+      // GO TO RESULT PAGE
+      // ==============================
+
       navigate("/result", {
         state: {
           score,
+
           total: questions.length,
+
           review,
         },
       });
     } catch (err) {
-      console.error("Result save error:", err);
+      console.error(
+        "Result save error:",
+        err
+      );
 
       if (err.response) {
+        console.error(
+          "Result status:",
+          err.response.status
+        );
+
         console.error(
           "Result response:",
           err.response.data
@@ -190,30 +276,36 @@ function Quiz() {
     navigate,
   ]);
 
-  // ==========================
+  // ==============================
   // TIMER
-  // ==========================
+  // ==============================
 
   useEffect(() => {
     if (
       submitted ||
-      questions.length === 0 ||
-      loading
+      loading ||
+      questions.length === 0
     ) {
       return;
     }
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
+        // ==============================
+        // TIME EXPIRED
+        // ==============================
+
         if (prev <= 1) {
           clearInterval(timer);
 
+          // Last question
           if (
             currentQuestion ===
             questions.length - 1
           ) {
             handleSubmit();
           } else {
+            // Go to next question
             setCurrentQuestion(
               (old) => old + 1
             );
@@ -226,7 +318,9 @@ function Quiz() {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+    };
   }, [
     currentQuestion,
     questions,
@@ -235,109 +329,203 @@ function Quiz() {
     loading,
   ]);
 
-  // ==========================
+  // ==============================
   // RESET TIMER
-  // ==========================
+  // ==============================
 
   useEffect(() => {
     setTimeLeft(QUESTION_TIME);
   }, [currentQuestion]);
 
-  // ==========================
-  // LOADING
-  // ==========================
+  // ==============================
+  // LOADING SCREEN
+  // ==============================
 
   if (loading) {
     return (
       <div className="loading-page">
-        <h2>Loading Questions...</h2>
-        <p>Please wait.</p>
+        <div className="loading-box">
+          <div className="spinner-border"></div>
+
+          <h2>
+            Loading Questions...
+          </h2>
+
+          <p>
+            Please wait while the quiz
+            is loading.
+          </p>
+        </div>
       </div>
     );
   }
 
-  // ==========================
-  // ERROR
-  // ==========================
+  // ==============================
+  // ERROR SCREEN
+  // ==============================
 
   if (error) {
     return (
       <div className="loading-page">
-        <h2>Unable to Load Quiz</h2>
+        <div className="loading-box">
+          <h2>
+            Unable to Load Quiz
+          </h2>
 
-        <p>{error}</p>
+          <p>{error}</p>
 
-        <button
-          onClick={() => window.location.reload()}
-          className="next-btn"
-          style={{ marginTop: "20px" }}
-        >
-          Try Again
-        </button>
+          <button
+            onClick={() =>
+              window.location.reload()
+            }
+            className="next-btn"
+            style={{
+              marginTop: "20px",
+            }}
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
-  // ==========================
+  // ==============================
   // NO QUESTIONS
-  // ==========================
+  // ==============================
 
   if (questions.length === 0) {
     return (
       <div className="loading-page">
-        <h2>No Questions Found</h2>
+        <div className="loading-box">
+          <h2>
+            No Questions Found
+          </h2>
 
-        <p>
-          This quiz does not contain any questions.
-        </p>
+          <p>
+            This quiz does not contain
+            any questions.
+          </p>
+        </div>
       </div>
     );
   }
 
-  // ==========================
+  // ==============================
   // CURRENT QUESTION
-  // ==========================
+  // ==============================
 
   const question =
     questions[currentQuestion];
 
-  // ==========================
+  // ==============================
+  // TIMER STATUS
+  // ==============================
+
+  const timerClass =
+    timeLeft <= 5
+      ? "danger"
+      : timeLeft <= 10
+      ? "warning"
+      : "safe";
+
+  // ==============================
+  // PROGRESS
+  // ==============================
+
+  const progress =
+    ((currentQuestion + 1) /
+      questions.length) *
+    100;
+
+  // ==============================
   // MAIN UI
-  // ==========================
+  // ==============================
 
   return (
     <div className="quiz-page">
+
       <div className="quiz-container">
 
         {/* ==========================
-            HEADER
+            TECHNICAL HEADER
         ========================== */}
 
         <div className="quiz-header">
-          <div>
+
+          <div className="quiz-header-left">
+
+            <div className="technical-label">
+              QUIZ // SYSTEM ACTIVE
+            </div>
+
             <h1 className="quiz-title">
               Think Smart Quiz
             </h1>
 
             <p className="quiz-subtitle">
-              Answer every question before the timer expires
+              Answer every question before
+              the timer expires
             </p>
+
           </div>
 
-          {/* TIMER */}
+          {/* ==========================
+              TIMER
+          ========================== */}
 
           <div
-            className={`timer-circle ${
-              timeLeft <= 5
-                ? "danger"
-                : timeLeft <= 10
-                ? "warning"
-                : "safe"
-            }`}
+            className={`timer-circle ${timerClass}`}
           >
-            <span>{timeLeft}</span>
-            <small>SEC</small>
+            <span>
+              {timeLeft}
+            </span>
+
+            <small>
+              SEC
+            </small>
           </div>
+
+        </div>
+
+        {/* ==========================
+            QUESTION INFORMATION
+        ========================== */}
+
+        <div className="question-info">
+
+          <div className="question-counter">
+
+            QUESTION{" "}
+
+            {String(
+              currentQuestion + 1
+            ).padStart(2, "0")}
+
+            {" / "}
+
+            {String(
+              questions.length
+            ).padStart(2, "0")}
+
+          </div>
+
+          <div className="answered-counter">
+
+            ANSWERED{" "}
+
+            {
+              Object.keys(
+                answers
+              ).length
+            }
+
+            {" / "}
+
+            {questions.length}
+
+          </div>
+
         </div>
 
         {/* ==========================
@@ -345,28 +533,31 @@ function Quiz() {
         ========================== */}
 
         <div className="progress-wrapper">
+
           <div className="progress-text">
+
             <span>
-              Question {currentQuestion + 1}
+              Question{" "}
+              {currentQuestion + 1}
             </span>
 
             <span>
-              {questions.length}
+              {Math.round(progress)}%
             </span>
+
           </div>
 
           <div className="progress">
+
             <div
               className="progress-fill"
               style={{
-                width: `${
-                  ((currentQuestion + 1) /
-                    questions.length) *
-                  100
-                }%`,
+                width: `${progress}%`,
               }}
             />
+
           </div>
+
         </div>
 
         {/* ==========================
@@ -374,8 +565,22 @@ function Quiz() {
         ========================== */}
 
         <div className="question-card">
-          <div className="question-number">
-            Q{currentQuestion + 1}
+
+          <div className="question-top">
+
+            <div className="question-number">
+
+              Q
+              {String(
+                currentQuestion + 1
+              ).padStart(2, "0")}
+
+            </div>
+
+            <div className="question-tag">
+              MULTIPLE CHOICE
+            </div>
+
           </div>
 
           <h2 className="question-title">
@@ -387,64 +592,131 @@ function Quiz() {
           ========================== */}
 
           <div className="options">
-            {Array.isArray(question.options) &&
-              question.options.map(
-                (option, index) => (
-                  <label
-                    key={index}
-                    className={`option-card ${
-                      answers[question._id] ===
-                      option
-                        ? "selected"
-                        : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name={question._id}
-                      value={option}
-                      checked={
-                        answers[
-                          question._id
-                        ] === option
-                      }
-                      onChange={(e) =>
-                        handleOptionChange(
-                          question._id,
-                          e.target.value
-                        )
-                      }
-                    />
 
-                    <span>{option}</span>
-                  </label>
-                )
+            {Array.isArray(
+              question.options
+            ) &&
+              question.options.map(
+                (option, index) => {
+
+                  const isSelected =
+                    answers[
+                      question._id
+                    ] === option;
+
+                  return (
+                    <label
+                      key={index}
+                      className={`option-card ${
+                        isSelected
+                          ? "selected"
+                          : ""
+                      }`}
+                    >
+
+                      <input
+                        type="radio"
+                        name={
+                          question._id
+                        }
+                        value={option}
+                        checked={
+                          isSelected
+                        }
+                        onChange={(e) =>
+                          handleOptionChange(
+                            question._id,
+                            e.target.value
+                          )
+                        }
+                      />
+
+                      <span className="option-letter">
+                        {String.fromCharCode(
+                          65 + index
+                        )}
+                      </span>
+
+                      <span className="option-text">
+                        {option}
+                      </span>
+
+                      {isSelected && (
+                        <span className="option-check">
+                          ✓
+                        </span>
+                      )}
+
+                    </label>
+                  );
+                }
               )}
+
           </div>
+
         </div>
 
         {/* ==========================
             QUESTION NAVIGATOR
         ========================== */}
 
-        <div className="question-nav">
-          {questions.map((q, index) => (
-            <button
-              key={q._id}
-              className={`nav-btn ${
-                index === currentQuestion
-                  ? "current"
-                  : answers[q._id]
-                  ? "answered"
-                  : ""
-              }`}
-              onClick={() =>
-                setCurrentQuestion(index)
-              }
-            >
-              {index + 1}
-            </button>
-          ))}
+        <div className="question-navigator">
+
+          <div className="navigator-header">
+
+            <span>
+              QUESTION INDEX
+            </span>
+
+            <span>
+              {questions.length} ITEMS
+            </span>
+
+          </div>
+
+          <div className="question-nav">
+
+            {questions.map(
+              (q, index) => (
+
+                <button
+                  key={
+                    q._id || index
+                  }
+                  type="button"
+                  className={`nav-btn ${
+                    index ===
+                    currentQuestion
+                      ? "current"
+                      : answers[
+                          q._id
+                        ]
+                      ? "answered"
+                      : ""
+                  }`}
+                  onClick={() => {
+
+                    if (
+                      !submitted
+                    ) {
+                      setCurrentQuestion(
+                        index
+                      );
+                    }
+
+                  }}
+                >
+                  {String(
+                    index + 1
+                  ).padStart(2, "0")}
+
+                </button>
+
+              )
+            )}
+
+          </div>
+
         </div>
 
         {/* ==========================
@@ -452,43 +724,102 @@ function Quiz() {
         ========================== */}
 
         <div className="navigation-buttons">
+
+          {/* PREVIOUS */}
+
           <button
+            type="button"
             className="previous-btn"
-            disabled={currentQuestion === 0}
-            onClick={() =>
-              setCurrentQuestion(
-                currentQuestion - 1
-              )
+            disabled={
+              currentQuestion === 0 ||
+              submitted
             }
+            onClick={() => {
+
+              if (
+                currentQuestion > 0
+              ) {
+                setCurrentQuestion(
+                  currentQuestion - 1
+                );
+              }
+
+            }}
           >
-            ◀ Previous
+            <span>
+              ◀
+            </span>
+
+            Previous
+
           </button>
+
+          {/* NEXT / SUBMIT */}
 
           {currentQuestion ===
           questions.length - 1 ? (
+
             <button
+              type="button"
               className="submit-btn"
               disabled={submitted}
               onClick={handleSubmit}
             >
+
               {submitted
                 ? "Submitting..."
-                : "Submit Quiz"}
+                : "Submit Quiz →"}
+
             </button>
+
           ) : (
+
             <button
+              type="button"
               className="next-btn"
+              disabled={submitted}
               onClick={() =>
                 setCurrentQuestion(
                   currentQuestion + 1
                 )
               }
             >
-              Next ▶
+
+              Next
+
+              <span>
+                ▶
+              </span>
+
             </button>
+
           )}
+
         </div>
+
+        {/* ==========================
+            FOOTER STATUS
+        ========================== */}
+
+        <div className="quiz-footer">
+
+          <span>
+            ● SECURE QUIZ SESSION
+          </span>
+
+          <span>
+            TIMER:{" "}
+            {timeLeft <= 5
+              ? "CRITICAL"
+              : timeLeft <= 10
+              ? "WARNING"
+              : "NORMAL"}
+          </span>
+
+        </div>
+
       </div>
+
     </div>
   );
 }
