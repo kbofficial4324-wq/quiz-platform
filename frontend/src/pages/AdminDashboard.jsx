@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-
 import API from "../services/api";
 
 import {
@@ -26,51 +25,75 @@ ChartJS.register(
 );
 
 function AdminDashboard() {
+  // ==========================================
+  // STATE
+  // ==========================================
+
   const [stats, setStats] = useState({});
   const [leaderboard, setLeaderboard] = useState([]);
+
   const [pdf, setPdf] = useState(null);
 
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // ==========================================
-  // Load Dashboard
+  // LOAD DASHBOARD
   // ==========================================
 
   const loadDashboard = async () => {
     try {
+      console.log("Loading dashboard...");
+
       const res = await API.get("/dashboard");
+
+      console.log("Dashboard response:", res.data);
 
       setStats(res.data);
     } catch (err) {
+      console.error("Dashboard Error:", err);
+
       console.error(
-        "Dashboard Error:",
-        err
+        "Dashboard Server Response:",
+        err.response?.data
       );
     }
   };
 
   // ==========================================
-  // Load Leaderboard
+  // LOAD LEADERBOARD
   // ==========================================
 
   const loadLeaderboard = async () => {
     try {
-      const res = await API.get(
-        "/leaderboard"
+      console.log("Loading leaderboard...");
+
+      const res = await API.get("/leaderboard");
+
+      console.log(
+        "Leaderboard response:",
+        res.data
       );
 
-      setLeaderboard(res.data);
-    } catch (err) {
-      console.error(
-        "Leaderboard Error:",
-        err
+      setLeaderboard(
+        Array.isArray(res.data)
+          ? res.data
+          : res.data?.leaderboard || []
       );
+    } catch (err) {
+      console.error("Leaderboard Error:", err);
+
+      console.error(
+        "Leaderboard Server Response:",
+        err.response?.data
+      );
+
+      setLeaderboard([]);
     }
   };
 
   // ==========================================
-  // Initial Load
+  // INITIAL LOAD
   // ==========================================
 
   useEffect(() => {
@@ -89,7 +112,40 @@ function AdminDashboard() {
   }, []);
 
   // ==========================================
-  // Upload PDF
+  // SELECT PDF
+  // ==========================================
+
+  const handlePDFChange = (e) => {
+    const selectedFile = e.target.files?.[0];
+
+    if (!selectedFile) {
+      setPdf(null);
+      return;
+    }
+
+    console.log("Selected file:", selectedFile);
+    console.log("File name:", selectedFile.name);
+    console.log("File type:", selectedFile.type);
+    console.log("File size:", selectedFile.size);
+
+    // Check extension
+    const fileName =
+      selectedFile.name.toLowerCase();
+
+    if (!fileName.endsWith(".pdf")) {
+      alert("Please select a PDF file only.");
+
+      e.target.value = "";
+      setPdf(null);
+
+      return;
+    }
+
+    setPdf(selectedFile);
+  };
+
+  // ==========================================
+  // UPLOAD PDF
   // ==========================================
 
   const uploadPDF = async () => {
@@ -98,83 +154,141 @@ function AdminDashboard() {
       return;
     }
 
-    // Make sure selected file is PDF
-    if (pdf.type !== "application/pdf") {
-      alert("Only PDF files are allowed.");
-      return;
-    }
+    console.log("================================");
+    console.log("📄 STARTING PDF UPLOAD");
+    console.log("File name:", pdf.name);
+    console.log("File type:", pdf.type);
+    console.log("File size:", pdf.size);
+    console.log(
+      "API Base URL:",
+      API.defaults.baseURL
+    );
+    console.log("================================");
+
+    // ========================================
+    // Create FormData
+    // ========================================
 
     const formData = new FormData();
 
     formData.append("pdf", pdf);
 
+    // Check FormData
+    console.log(
+      "FormData PDF:",
+      formData.get("pdf")
+    );
+
     try {
       setUploading(true);
 
-      console.log(
-        "Uploading PDF:",
-        pdf.name
-      );
+      // ======================================
+      // Send PDF to Render Backend
+      // ======================================
 
       const res = await API.post(
         "/pdf/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
+        formData
       );
 
-      console.log(
-        "PDF Upload Response:",
-        res.data
-      );
+      console.log("================================");
+      console.log("✅ PDF UPLOAD SUCCESSFUL");
+      console.log("Server response:", res.data);
+      console.log("================================");
 
       alert(
-        res.data.message ||
+        res.data?.message ||
           "PDF uploaded successfully!"
       );
 
-      // Clear selected PDF
+      // ======================================
+      // Clear selected file
+      // ======================================
+
       setPdf(null);
 
       const fileInput =
-        document.getElementById(
-          "pdfUpload"
-        );
+        document.getElementById("pdfUpload");
 
       if (fileInput) {
         fileInput.value = "";
       }
 
-      // Reload dashboard statistics
+      // ======================================
+      // Reload dashboard
+      // ======================================
+
       await loadDashboard();
 
       await loadLeaderboard();
+
     } catch (err) {
+      // ======================================
+      // ERROR DETAILS
+      // ======================================
+
+      console.error("================================");
+      console.error("❌ PDF UPLOAD FAILED");
+      console.error("================================");
+
+      console.error("Error:", err);
+
       console.error(
-        "PDF Upload Error:",
-        err
+        "Status:",
+        err.response?.status
       );
 
       console.error(
-        "Server Response:",
+        "Response:",
         err.response?.data
       );
 
-      alert(
-        err.response?.data?.message ||
-          "PDF Upload Failed"
+      console.error(
+        "Request URL:",
+        err.config?.url
       );
+
+      console.error(
+        "Base URL:",
+        err.config?.baseURL
+      );
+
+      console.error(
+        "Full URL:",
+        `${err.config?.baseURL || ""}${
+          err.config?.url || ""
+        }`
+      );
+
+      console.error("================================");
+
+      // ======================================
+      // User-friendly error
+      // ======================================
+
+      if (err.response) {
+        alert(
+          err.response.data?.message ||
+            `Upload failed. Server returned ${err.response.status}.`
+        );
+      } else if (err.request) {
+        alert(
+          "Upload failed. The backend server could not be reached."
+        );
+      } else {
+        alert(
+          err.message ||
+            "PDF Upload Failed."
+        );
+      }
+
     } finally {
       setUploading(false);
     }
   };
 
   // ==========================================
-  // Pie Chart
+  // PIE CHART
   // ==========================================
 
   const pieData = {
@@ -199,7 +313,7 @@ function AdminDashboard() {
   };
 
   // ==========================================
-  // Bar Chart
+  // BAR CHART
   // ==========================================
 
   const barData = {
@@ -229,7 +343,7 @@ function AdminDashboard() {
   };
 
   // ==========================================
-  // Loading
+  // LOADING SCREEN
   // ==========================================
 
   if (loading) {
@@ -243,11 +357,12 @@ function AdminDashboard() {
   }
 
   // ==========================================
-  // UI
+  // ADMIN DASHBOARD
   // ==========================================
 
   return (
     <div className="admin-dashboard">
+
       <div className="container py-5">
 
         {/* =====================================
@@ -264,7 +379,7 @@ function AdminDashboard() {
         </p>
 
         {/* =====================================
-            PDF UPLOAD
+            PDF UPLOAD CARD
         ===================================== */}
 
         <div className="upload-card">
@@ -292,6 +407,8 @@ function AdminDashboard() {
 
           <div className="upload-container">
 
+            {/* FILE SELECT */}
+
             <label
               htmlFor="pdfUpload"
               className="upload-box"
@@ -317,35 +434,20 @@ function AdminDashboard() {
 
             </label>
 
+            {/* FILE INPUT */}
+
             <input
               id="pdfUpload"
               type="file"
               accept=".pdf,application/pdf"
               hidden
-              onChange={(e) => {
-                const selectedFile =
-                  e.target.files?.[0];
-
-                if (
-                  selectedFile &&
-                  selectedFile.type !==
-                    "application/pdf"
-                ) {
-                  alert(
-                    "Please select a PDF file."
-                  );
-
-                  e.target.value = "";
-                  setPdf(null);
-
-                  return;
-                }
-
-                setPdf(selectedFile || null);
-              }}
+              onChange={handlePDFChange}
             />
 
+            {/* UPLOAD BUTTON */}
+
             <button
+              type="button"
               className="upload-btn"
               onClick={uploadPDF}
               disabled={uploading}
@@ -367,6 +469,8 @@ function AdminDashboard() {
 
         <div className="row mt-5">
 
+          {/* TOTAL QUIZZES */}
+
           <div className="col-lg-3 col-md-6 mb-4">
 
             <div className="stat-card bg-primary text-white">
@@ -382,6 +486,8 @@ function AdminDashboard() {
             </div>
 
           </div>
+
+          {/* TOTAL STUDENTS */}
 
           <div className="col-lg-3 col-md-6 mb-4">
 
@@ -399,6 +505,8 @@ function AdminDashboard() {
 
           </div>
 
+          {/* TOTAL QUESTIONS */}
+
           <div className="col-lg-3 col-md-6 mb-4">
 
             <div className="stat-card bg-warning">
@@ -414,6 +522,8 @@ function AdminDashboard() {
             </div>
 
           </div>
+
+          {/* AVERAGE SCORE */}
 
           <div className="col-lg-3 col-md-6 mb-4">
 
@@ -439,6 +549,8 @@ function AdminDashboard() {
 
         <div className="row mt-4">
 
+          {/* PIE */}
+
           <div className="col-lg-6 mb-4">
 
             <div className="chart-card">
@@ -447,11 +559,15 @@ function AdminDashboard() {
                 Pass vs Fail
               </h4>
 
-              <Pie data={pieData} />
+              <Pie
+                data={pieData}
+              />
 
             </div>
 
           </div>
+
+          {/* BAR */}
 
           <div className="col-lg-6 mb-4">
 
@@ -461,7 +577,9 @@ function AdminDashboard() {
                 Score Analysis
               </h4>
 
-              <Bar data={barData} />
+              <Bar
+                data={barData}
+              />
 
             </div>
 
@@ -539,7 +657,8 @@ function AdminDashboard() {
 
                         <td>
                           {
-                            student.studentName
+                            student.studentName ||
+                            "-"
                           }
                         </td>
 
@@ -551,18 +670,23 @@ function AdminDashboard() {
                         </td>
 
                         <td>
-                          {student.score}
+                          {
+                            student.score ??
+                            0
+                          }
                         </td>
 
                         <td>
                           {
-                            student.percentage
+                            student.percentage ??
+                            0
                           }%
                         </td>
 
                       </tr>
 
                     )
+
                   )
 
                 ) : (
@@ -590,6 +714,7 @@ function AdminDashboard() {
         </div>
 
       </div>
+
     </div>
   );
 }
