@@ -6,132 +6,348 @@ import Question from "../models/Question.js";
 
 export const uploadPDF = async (req, res) => {
   try {
+    // ==========================================
+    // Check PDF
+    // ==========================================
+
     if (!req.file) {
       return res.status(400).json({
+        success: false,
         message: "No PDF uploaded",
       });
     }
 
+    console.log("====================================");
+    console.log("📄 PDF Upload Started");
+    console.log("File:", req.file.originalname);
+
     const pdfParser = new PDFParser();
 
+    // ==========================================
+    // PDF Parsing Error
+    // ==========================================
+
     pdfParser.on("pdfParser_dataError", (err) => {
-      console.error(err);
+      console.error("❌ PDF Parser Error:", err);
+
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
 
       return res.status(500).json({
+        success: false,
         message: "Failed to parse PDF",
       });
     });
+
+    // ==========================================
+    // PDF Successfully Parsed
+    // ==========================================
 
     pdfParser.on("pdfParser_dataReady", async (pdfData) => {
       try {
         let text = "";
 
+        // ==========================================
+        // Extract text from PDF
+        // ==========================================
+
         pdfData.Pages.forEach((page) => {
           page.Texts.forEach((item) => {
             item.R.forEach((r) => {
-              text += decodeURIComponent(r.T) + "\n";
+              try {
+                text += decodeURIComponent(r.T) + "\n";
+              } catch (error) {
+                text += r.T + "\n";
+              }
             });
           });
         });
 
+        console.log("====================================");
+        console.log("📄 Extracted PDF Text:");
+        console.log(text);
+        console.log("====================================");
+
+        // ==========================================
+        // Convert PDF text into lines
+        // ==========================================
+
         const lines = text
           .split("\n")
-          .map((l) => l.trim())
-          .filter((l) => l !== "");
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0);
+
+        console.log("Total extracted lines:", lines.length);
+
+        // ==========================================
+        // Create Quiz
+        // ==========================================
 
         const quiz = await Quiz.create({
           title: req.file.originalname,
           pdfFile: req.file.filename,
+          totalQuestions: 0,
         });
 
+        console.log("✅ Quiz Created:", quiz._id);
+
+        // ==========================================
+        // Question Parser
+        // ==========================================
+
         let currentQuestion = null;
+
+        const questionsToSave = [];
 
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
 
-          if (/^\d+\./.test(line)) {
-            if (currentQuestion) {
-              await Question.create(currentQuestion);
+          // ------------------------------------------
+          // QUESTION
+          // Example:
+          // 1. What does AI stand for?
+          // ------------------------------------------
+
+          if (/^\d+\.\s*/.test(line)) {
+            // Save previous question into array
+            if (
+              currentQuestion &&
+              currentQuestion.question &&
+              currentQuestion.options.length > 0 &&
+              currentQuestion.answer
+            ) {
+              questionsToSave.push(currentQuestion);
             }
 
             currentQuestion = {
               quizId: quiz._id,
-              question: line.replace(/^\d+\.\s*/, ""),
+              question: line.replace(/^\d+\.\s*/, "").trim(),
               options: [],
               answer: "",
             };
+
+            continue;
           }
 
-          else if (/^[A-D]\)/.test(line)) {
-            currentQuestion.options.push(
-              line.substring(3).trim()
+          // ------------------------------------------
+          // OPTIONS
+          // A) Artificial Intelligence
+          // B) Machine Learning
+          // C) Internet
+          // D) Computer
+          // ------------------------------------------
+
+          if (
+            currentQuestion &&
+            /^[A-D][\)\.]\s*/i.test(line)
+          ) {
+            const option = line
+              .replace(/^[A-D][\)\.]\s*/i, "")
+              .trim();
+
+            currentQuestion.options.push(option);
+
+            continue;
+          }
+
+          // ------------------------------------------
+          // ANSWER
+          // Answer: B
+          // Answer: B) Artificial Intelligence
+          // ------------------------------------------
+
+          if (
+            currentQuestion &&
+            /^Answer\s*:/i.test(line)
+          ) {
+            const answerText = line
+              .replace(/^Answer\s*:\s*/i, "")
+              .trim();
+
+            // Example: B
+            const letterMatch = answerText.match(
+              /^([A-D])/i
             );
+
+            if (letterMatch) {
+              const letter =
+                letterMatch[1].toUpperCase();
+
+              const index =
+                ["A", "B", "C", "D"].indexOf(letter);
+
+              if (
+                index >= 0 &&
+                currentQuestion.options[index]
+              ) {
+                currentQuestion.answer =
+                  currentQuestion.options[index];
+              }
+            }
+
+            continue;
           }
-
-  else if (/^Answer\s*:/.test(line)) {
-
-  const match = line.match(/^Answer\s*:\s*([A-D])/i);
-
-  if (match) {
-
-    const letter = match[1].toUpperCase();
-
-    const index = ["A", "B", "C", "D"].indexOf(letter);
-
-    if (
-      index >= 0 &&
-      currentQuestion.options[index]
-    ) {
-      currentQuestion.answer =
-        currentQuestion.options[index];
-    }
-
-  }
-
-}
         }
 
-       if (currentQuestion) {
+        // ==========================================
+        // Save last question
+        // ==========================================
 
-  if (!currentQuestion.answer) {
-    console.log("Missing answer:", currentQuestion.question);
-    console.log(currentQuestion.options);
-  } else {
-    await Question.create(currentQuestion);
-  }
+        if (
+          currentQuestion &&
+          currentQuestion.question &&
+          currentQuestion.options.length > 0 &&
+          currentQuestion.answer
+        ) {
+          questionsToSave.push(currentQuestion);
+        }
 
-}
+        // ==========================================
+        // Debug information
+        // ==========================================
 
-        quiz.totalQuestions = await Question.countDocuments({
-          quizId: quiz._id,
+        console.log(
+          "Questions successfully parsed:",
+          questionsToSave.length
+        );
+
+        questionsToSave.forEach((q, index) => {
+          console.log(
+            `Question ${index + 1}:`,
+            q.question
+          );
+
+          console.log(
+            "Options:",
+            q.options
+          );
+
+          console.log(
+            "Answer:",
+            q.answer
+          );
         });
+
+        // ==========================================
+        // No questions found
+        // ==========================================
+
+        if (questionsToSave.length === 0) {
+          await Quiz.findByIdAndDelete(quiz._id);
+
+          if (
+            req.file?.path &&
+            fs.existsSync(req.file.path)
+          ) {
+            fs.unlinkSync(req.file.path);
+          }
+
+          return res.status(400).json({
+            success: false,
+            message:
+              "No valid questions were found in the PDF. Check the PDF format.",
+          });
+        }
+
+        // ==========================================
+        // Save questions to MongoDB Atlas
+        // ==========================================
+
+        const savedQuestions =
+          await Question.insertMany(
+            questionsToSave
+          );
+
+        console.log(
+          "✅ Questions saved:",
+          savedQuestions.length
+        );
+
+        // ==========================================
+        // Update Quiz Question Count
+        // ==========================================
+
+        quiz.totalQuestions =
+          savedQuestions.length;
 
         await quiz.save();
 
-        fs.unlinkSync(req.file.path);
+        console.log(
+          "✅ Quiz updated with question count:",
+          quiz.totalQuestions
+        );
 
-        res.json({
+        // ==========================================
+        // Delete uploaded PDF from server
+        // ==========================================
+
+        if (
+          req.file?.path &&
+          fs.existsSync(req.file.path)
+        ) {
+          fs.unlinkSync(req.file.path);
+        }
+
+        // ==========================================
+        // Success
+        // ==========================================
+
+        console.log("🎉 PDF Import Successful");
+        console.log("Quiz ID:", quiz._id);
+        console.log(
+          "Total Questions:",
+          savedQuestions.length
+        );
+        console.log("====================================");
+
+        return res.status(201).json({
+          success: true,
           message: "Quiz imported successfully",
           quizId: quiz._id,
-          totalQuestions: quiz.totalQuestions,
+          totalQuestions: savedQuestions.length,
         });
+      } catch (error) {
+        console.error(
+          "❌ PDF Processing Error:",
+          error
+        );
 
-      } catch (err) {
-        console.error(err);
+        if (
+          req.file?.path &&
+          fs.existsSync(req.file.path)
+        ) {
+          fs.unlinkSync(req.file.path);
+        }
 
-        res.status(500).json({
-          message: err.message,
+        return res.status(500).json({
+          success: false,
+          message: error.message,
         });
       }
     });
 
+    // ==========================================
+    // Start PDF Parsing
+    // ==========================================
+
     pdfParser.loadPDF(req.file.path);
+  } catch (error) {
+    console.error(
+      "❌ Upload PDF Error:",
+      error
+    );
 
-  } catch (err) {
-    console.error(err);
+    if (
+      req.file?.path &&
+      fs.existsSync(req.file.path)
+    ) {
+      fs.unlinkSync(req.file.path);
+    }
 
-    res.status(500).json({
-      message: err.message,
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
