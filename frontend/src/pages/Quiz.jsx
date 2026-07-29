@@ -1,717 +1,286 @@
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
-
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 import API from "../services/api";
-
 import "./Quiz.css";
 
 function Quiz() {
   const navigate = useNavigate();
   const { quizId } = useParams();
 
-  // ==============================
-  // STATES
-  // ==============================
-
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [currentQuestion, setCurrentQuestion] = useState(0);
 
-  const QUESTION_TIME = 20;
-
-  const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
-
-  const [submitted, setSubmitted] = useState(false);
-
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [error, setError] = useState("");
+  const [timeLeft, setTimeLeft] = useState(1200); //20 mins
 
-  // ==============================
-  // LOAD QUESTIONS
-  // ==============================
+  // -----------------------------
+  // Load Questions
+  // -----------------------------
 
   useEffect(() => {
-    const loadQuestions = async () => {
-      try {
-        setLoading(true);
-        setError("");
+    loadQuestions();
+  }, []);
 
-        console.log(
-          "Loading questions for quiz:",
-          quizId
-        );
+  const loadQuestions = async () => {
+    try {
+      setLoading(true);
 
-        // IMPORTANT:
-        // Uses deployed backend through API service
-        const response = await API.get(
-          `/questions/${quizId}`
-        );
+      const res = await API.get(`/questions/${quizId}`);
 
-        console.log(
-          "Questions API response:",
-          response.data
-        );
+      setQuestions(res.data);
 
-        // ==============================
-        // HANDLE RESPONSE
-        // ==============================
-
-        let loadedQuestions = response.data;
-
-        // If backend returns:
-        // { questions: [...] }
-
-        if (response.data?.questions) {
-          loadedQuestions = response.data.questions;
-        }
-
-        // ==============================
-        // VALIDATE RESPONSE
-        // ==============================
-
-        if (!Array.isArray(loadedQuestions)) {
-          throw new Error(
-            "Invalid questions response from server"
-          );
-        }
-
-        if (loadedQuestions.length === 0) {
-          setQuestions([]);
-          setError(
-            "No questions found for this quiz."
-          );
-          return;
-        }
-
-        setQuestions(loadedQuestions);
-
-        // Reset quiz state
-        setCurrentQuestion(0);
-        setAnswers({});
-        setTimeLeft(QUESTION_TIME);
-      } catch (err) {
-        console.error(
-          "Question loading error:",
-          err
-        );
-
-        if (err.response) {
-          console.error(
-            "Status:",
-            err.response.status
-          );
-
-          console.error(
-            "Response:",
-            err.response.data
-          );
-
-          setError(
-            err.response.data?.message ||
-              `Server error: ${err.response.status}`
-          );
-        } else if (err.request) {
-          setError(
-            "Cannot connect to the backend server. Please make sure the deployed backend is running."
-          );
-        } else {
-          setError(
-            err.message ||
-              "Failed to load questions."
-          );
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (quizId) {
-      loadQuestions();
-    } else {
       setLoading(false);
-      setError("Quiz ID is missing.");
+    } catch (err) {
+      console.log(err);
+
+      alert("Unable to Load Quiz");
+
+      navigate("/student");
     }
-  }, [quizId]);
-
-  // ==============================
-  // SAVE ANSWER
-  // ==============================
-
-  const handleOptionChange = (
-    questionId,
-    option
-  ) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: option,
-    }));
   };
 
-  // ==============================
-  // SUBMIT QUIZ
-  // ==============================
-
-  const handleSubmit = useCallback(async () => {
-    if (submitted) {
-      return;
-    }
-
-    if (questions.length === 0) {
-      alert(
-        "There are no questions to submit."
-      );
-      return;
-    }
-
-    setSubmitted(true);
-
-    let score = 0;
-
-    const review = questions.map((q) => {
-      const studentAnswer =
-        answers[q._id] || "Not Answered";
-
-      const isCorrect =
-        studentAnswer === q.answer;
-
-      if (isCorrect) {
-        score++;
-      }
-
-      return {
-        question: q.question,
-
-        studentAnswer,
-
-        correctAnswer: q.answer,
-
-        isCorrect,
-      };
-    });
-
-    try {
-      console.log(
-        "Submitting result..."
-      );
-
-      console.log({
-        studentName: "Demo Student",
-        quizId,
-        score,
-        totalQuestions: questions.length,
-        answers: review,
-      });
-
-      // IMPORTANT:
-      // Uses deployed backend through API service
-      await API.post(
-        "/results",
-        {
-          studentName: "Demo Student",
-
-          quizId,
-
-          score,
-
-          totalQuestions:
-            questions.length,
-
-          answers: review,
-        }
-      );
-
-      console.log(
-        "Result saved successfully."
-      );
-
-      // ==============================
-      // GO TO RESULT PAGE
-      // ==============================
-
-      navigate("/result", {
-        state: {
-          score,
-
-          total: questions.length,
-
-          review,
-        },
-      });
-    } catch (err) {
-      console.error(
-        "Result save error:",
-        err
-      );
-
-      if (err.response) {
-        console.error(
-          "Result status:",
-          err.response.status
-        );
-
-        console.error(
-          "Result response:",
-          err.response.data
-        );
-      }
-
-      alert(
-        err.response?.data?.message ||
-          "Failed to save result."
-      );
-
-      setSubmitted(false);
-    }
-  }, [
-    submitted,
-    questions,
-    answers,
-    quizId,
-    navigate,
-  ]);
-
-  // ==============================
-  // TIMER
-  // ==============================
+  // -----------------------------
+  // Timer
+  // -----------------------------
 
   useEffect(() => {
-    if (
-      submitted ||
-      loading ||
-      questions.length === 0
-    ) {
+    if (loading) return;
+
+    if (timeLeft <= 0) {
+      submitQuiz();
       return;
     }
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        // ==============================
-        // TIME EXPIRED
-        // ==============================
-
-        if (prev <= 1) {
-          clearInterval(timer);
-
-          // Last question
-          if (
-            currentQuestion ===
-            questions.length - 1
-          ) {
-            handleSubmit();
-          } else {
-            // Go to next question
-            setCurrentQuestion(
-              (old) => old + 1
-            );
-          }
-
-          return QUESTION_TIME;
-        }
-
-        return prev - 1;
-      });
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
 
-    return () => {
-      clearInterval(timer);
-    };
-  }, [
-    currentQuestion,
-    questions,
-    submitted,
-    handleSubmit,
-    loading,
-  ]);
+    return () => clearInterval(timer);
 
-  // ==============================
-  // RESET TIMER
-  // ==============================
+  }, [timeLeft, loading]);
 
-  useEffect(() => {
-    setTimeLeft(QUESTION_TIME);
-  }, [currentQuestion]);
+  // -----------------------------
+  // Time Format
+  // -----------------------------
 
-  // ==============================
-  // LOADING SCREEN
-  // ==============================
+  const formatTime = () => {
+
+    const minutes = Math.floor(timeLeft / 60);
+
+    const seconds = timeLeft % 60;
+
+    return `${minutes}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+
+  };
+
+  // -----------------------------
+  // Select Answer
+  // -----------------------------
+
+  const selectAnswer = (option) => {
+
+    setAnswers({
+      ...answers,
+      [questions[currentQuestion]._id]: option,
+    });
+
+  };
+
+  // -----------------------------
+  // Next Question
+  // -----------------------------
+
+  const nextQuestion = () => {
+
+    if (currentQuestion < questions.length - 1) {
+
+      setCurrentQuestion(currentQuestion + 1);
+
+    }
+
+  };
+
+  // -----------------------------
+  // Previous Question
+  // -----------------------------
+
+  const previousQuestion = () => {
+
+    if (currentQuestion > 0) {
+
+      setCurrentQuestion(currentQuestion - 1);
+
+    }
+
+  };
+
+  // -----------------------------
+  // Jump Question
+  // -----------------------------
+
+  const jumpQuestion = (index) => {
+
+    setCurrentQuestion(index);
+
+  };
+
+  // -----------------------------
+  // Submit Quiz
+  // -----------------------------
+
+  const submitQuiz = async () => {
+
+    try {
+
+      setSubmitting(true);
+
+      const payload = {
+
+        quizId,
+
+        answers,
+
+      };
+
+      const res = await API.post(
+        "/results/submit",
+        payload
+      );
+
+      navigate("/result", {
+        state: res.data,
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      alert("Submission Failed");
+
+    } finally {
+
+      setSubmitting(false);
+
+    }
+
+  };
 
   if (loading) {
+
     return (
-      <div className="loading-page">
-        <div className="loading-box">
-          <div className="spinner-border"></div>
 
-          <h2>
-            Loading Questions...
-          </h2>
+      <div className="quiz-loading">
 
-          <p>
-            Please wait while the quiz
-            is loading.
-          </p>
-        </div>
+        <div className="loader"></div>
+
+        <h2>Loading Quiz...</h2>
+
       </div>
+
     );
+
   }
 
-  // ==============================
-  // ERROR SCREEN
-  // ==============================
-
-  if (error) {
+  const question = questions[currentQuestion];
     return (
-      <div className="loading-page">
-        <div className="loading-box">
-          <h2>
-            Unable to Load Quiz
-          </h2>
-
-          <p>{error}</p>
-
-          <button
-            onClick={() =>
-              window.location.reload()
-            }
-            className="next-btn"
-            style={{
-              marginTop: "20px",
-            }}
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ==============================
-  // NO QUESTIONS
-  // ==============================
-
-  if (questions.length === 0) {
-    return (
-      <div className="loading-page">
-        <div className="loading-box">
-          <h2>
-            No Questions Found
-          </h2>
-
-          <p>
-            This quiz does not contain
-            any questions.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ==============================
-  // CURRENT QUESTION
-  // ==============================
-
-  const question =
-    questions[currentQuestion];
-
-  // ==============================
-  // TIMER STATUS
-  // ==============================
-
-  const timerClass =
-    timeLeft <= 5
-      ? "danger"
-      : timeLeft <= 10
-      ? "warning"
-      : "safe";
-
-  // ==============================
-  // PROGRESS
-  // ==============================
-
-  const progress =
-    ((currentQuestion + 1) /
-      questions.length) *
-    100;
-
-  // ==============================
-  // MAIN UI
-  // ==============================
-
-  return (
     <div className="quiz-page">
+
+      {/* Animated Background */}
+      <div className="bg-animation">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
 
       <div className="quiz-container">
 
-        {/* ==========================
-            TECHNICAL HEADER
-        ========================== */}
+        {/* Header */}
 
         <div className="quiz-header">
 
-          <div className="quiz-header-left">
+          <h1>Quiz Platform</h1>
 
-            <div className="technical-label">
-              QUIZ // SYSTEM ACTIVE
-            </div>
-
-            <h1 className="quiz-title">
-              Think Smart Quiz
-            </h1>
-
-            <p className="quiz-subtitle">
-              Answer every question before
-              the timer expires
-            </p>
-
-          </div>
-
-          {/* ==========================
-              TIMER
-          ========================== */}
-
-          <div
-            className={`timer-circle ${timerClass}`}
-          >
-            <span>
-              {timeLeft}
-            </span>
-
-            <small>
-              SEC
-            </small>
+          <div className="timer">
+            ⏱ {formatTime()}
           </div>
 
         </div>
 
-        {/* ==========================
-            QUESTION INFORMATION
-        ========================== */}
+        {/* Progress */}
 
-        <div className="question-info">
+        <div className="progress-section">
 
-          <div className="question-counter">
-
-            QUESTION{" "}
-
-            {String(
-              currentQuestion + 1
-            ).padStart(2, "0")}
-
-            {" / "}
-
-            {String(
-              questions.length
-            ).padStart(2, "0")}
-
-          </div>
-
-          <div className="answered-counter">
-
-            ANSWERED{" "}
-
-            {
-              Object.keys(
-                answers
-              ).length
-            }
-
-            {" / "}
-
-            {questions.length}
-
-          </div>
-
-        </div>
-
-        {/* ==========================
-            PROGRESS
-        ========================== */}
-
-        <div className="progress-wrapper">
-
-          <div className="progress-text">
+          <div className="progress-top">
 
             <span>
-              Question{" "}
-              {currentQuestion + 1}
+              Question {currentQuestion + 1} of {questions.length}
             </span>
 
             <span>
-              {Math.round(progress)}%
+              {Math.round(
+                ((currentQuestion + 1) /
+                  questions.length) *
+                  100
+              )}
+              %
             </span>
 
           </div>
 
-          <div className="progress">
+          <div className="progress-bar">
 
             <div
               className="progress-fill"
               style={{
-                width: `${progress}%`,
+                width: `${
+                  ((currentQuestion + 1) /
+                    questions.length) *
+                  100
+                }%`,
               }}
-            />
+            ></div>
 
           </div>
 
         </div>
 
-        {/* ==========================
-            QUESTION CARD
-        ========================== */}
+        {/* Question */}
 
         <div className="question-card">
 
-          <div className="question-top">
-
-            <div className="question-number">
-
-              Q
-              {String(
-                currentQuestion + 1
-              ).padStart(2, "0")}
-
-            </div>
-
-            <div className="question-tag">
-              MULTIPLE CHOICE
-            </div>
-
-          </div>
-
-          <h2 className="question-title">
-            {question.question}
-          </h2>
-
-          {/* ==========================
-              OPTIONS
-          ========================== */}
+          <h2>{question.question}</h2>
 
           <div className="options">
 
-            {Array.isArray(
-              question.options
-            ) &&
-              question.options.map(
-                (option, index) => {
-
-                  const isSelected =
-                    answers[
-                      question._id
-                    ] === option;
-
-                  return (
-                    <label
-                      key={index}
-                      className={`option-card ${
-                        isSelected
-                          ? "selected"
-                          : ""
-                      }`}
-                    >
-
-                      <input
-                        type="radio"
-                        name={
-                          question._id
-                        }
-                        value={option}
-                        checked={
-                          isSelected
-                        }
-                        onChange={(e) =>
-                          handleOptionChange(
-                            question._id,
-                            e.target.value
-                          )
-                        }
-                      />
-
-                      <span className="option-letter">
-                        {String.fromCharCode(
-                          65 + index
-                        )}
-                      </span>
-
-                      <span className="option-text">
-                        {option}
-                      </span>
-
-                      {isSelected && (
-                        <span className="option-check">
-                          ✓
-                        </span>
-                      )}
-
-                    </label>
-                  );
-                }
-              )}
-
-          </div>
-
-        </div>
-
-        {/* ==========================
-            QUESTION NAVIGATOR
-        ========================== */}
-
-        <div className="question-navigator">
-
-          <div className="navigator-header">
-
-            <span>
-              QUESTION INDEX
-            </span>
-
-            <span>
-              {questions.length} ITEMS
-            </span>
-
-          </div>
-
-          <div className="question-nav">
-
-            {questions.map(
-              (q, index) => (
-
-                <button
-                  key={
-                    q._id || index
-                  }
-                  type="button"
-                  className={`nav-btn ${
-                    index ===
-                    currentQuestion
-                      ? "current"
-                      : answers[
-                          q._id
-                        ]
-                      ? "answered"
+            {question.options.map(
+              (option, index) => (
+                <div
+                  key={index}
+                  className={`option ${
+                    answers[question._id] === option
+                      ? "selected"
                       : ""
                   }`}
-                  onClick={() => {
-
-                    if (
-                      !submitted
-                    ) {
-                      setCurrentQuestion(
-                        index
-                      );
-                    }
-
-                  }}
+                  onClick={() =>
+                    selectAnswer(option)
+                  }
                 >
-                  {String(
-                    index + 1
-                  ).padStart(2, "0")}
+                  <div className="option-letter">
+                    {String.fromCharCode(
+                      65 + index
+                    )}
+                  </div>
 
-                </button>
-
+                  <div className="option-text">
+                    {option}
+                  </div>
+                </div>
               )
             )}
 
@@ -719,102 +288,37 @@ function Quiz() {
 
         </div>
 
-        {/* ==========================
-            NAVIGATION BUTTONS
-        ========================== */}
+        {/* Navigation */}
 
-        <div className="navigation-buttons">
-
-          {/* PREVIOUS */}
+        <div className="navigation">
 
           <button
-            type="button"
-            className="previous-btn"
-            disabled={
-              currentQuestion === 0 ||
-              submitted
-            }
-            onClick={() => {
-
-              if (
-                currentQuestion > 0
-              ) {
-                setCurrentQuestion(
-                  currentQuestion - 1
-                );
-              }
-
-            }}
+            className="prev-btn"
+            onClick={previousQuestion}
+            disabled={currentQuestion === 0}
           >
-            <span>
-              ◀
-            </span>
-
-            Previous
-
+            ← Previous
           </button>
-
-          {/* NEXT / SUBMIT */}
 
           {currentQuestion ===
           questions.length - 1 ? (
-
             <button
-              type="button"
               className="submit-btn"
-              disabled={submitted}
-              onClick={handleSubmit}
+              onClick={submitQuiz}
+              disabled={submitting}
             >
-
-              {submitted
+              {submitting
                 ? "Submitting..."
-                : "Submit Quiz →"}
-
+                : "Submit Quiz"}
             </button>
-
           ) : (
-
             <button
-              type="button"
               className="next-btn"
-              disabled={submitted}
-              onClick={() =>
-                setCurrentQuestion(
-                  currentQuestion + 1
-                )
-              }
+              onClick={nextQuestion}
             >
-
-              Next
-
-              <span>
-                ▶
-              </span>
-
+              Next →
             </button>
-
           )}
-
-        </div>
-
-        {/* ==========================
-            FOOTER STATUS
-        ========================== */}
-
-        <div className="quiz-footer">
-
-          <span>
-            ● SECURE QUIZ SESSION
-          </span>
-
-          <span>
-            TIMER:{" "}
-            {timeLeft <= 5
-              ? "CRITICAL"
-              : timeLeft <= 10
-              ? "WARNING"
-              : "NORMAL"}
-          </span>
 
         </div>
 
