@@ -14,11 +14,12 @@ function Quiz() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const [timeLeft, setTimeLeft] = useState(1200); //20 mins
+  // 20 seconds for each question
+  const [timeLeft, setTimeLeft] = useState(20);
 
-  // -----------------------------
-  // Load Questions
-  // -----------------------------
+  // ----------------------------
+  // Load Quiz Questions
+  // ----------------------------
 
   useEffect(() => {
     loadQuestions();
@@ -29,6 +30,8 @@ function Quiz() {
       setLoading(true);
 
       const res = await API.get(`/questions/${quizId}`);
+
+      console.log("Questions Loaded:", res.data);
 
       setQuestions(res.data);
 
@@ -42,290 +45,329 @@ function Quiz() {
     }
   };
 
-  // -----------------------------
+  // ----------------------------
   // Timer
-  // -----------------------------
+  // ----------------------------
 
   useEffect(() => {
     if (loading) return;
 
-    if (timeLeft <= 0) {
-      submitQuiz();
-      return;
-    }
+    if (questions.length === 0) return;
+
+    if (submitting) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => {
+
+        if (prev === 1) {
+
+          if (currentQuestion < questions.length - 1) {
+
+            setCurrentQuestion((old) => old + 1);
+
+            return 20;
+          }
+
+          submitQuiz();
+
+          return 0;
+        }
+
+        return prev - 1;
+
+      });
     }, 1000);
 
     return () => clearInterval(timer);
 
-  }, [timeLeft, loading]);
+  }, [loading, currentQuestion, questions, submitting]);
 
-  // -----------------------------
+  // Reset timer when moving to another question
+
+  useEffect(() => {
+    setTimeLeft(20);
+  }, [currentQuestion]);
+
+  // ----------------------------
   // Time Format
-  // -----------------------------
+  // ----------------------------
 
   const formatTime = () => {
 
-    const minutes = Math.floor(timeLeft / 60);
+    const min = Math.floor(timeLeft / 60);
 
-    const seconds = timeLeft % 60;
+    const sec = timeLeft % 60;
 
-    return `${minutes}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
+    return `${min}:${sec.toString().padStart(2, "0")}`;
 
   };
-
-  // -----------------------------
+    // ----------------------------
   // Select Answer
-  // -----------------------------
+  // ----------------------------
 
   const selectAnswer = (option) => {
-
-    setAnswers({
-      ...answers,
+    setAnswers((prev) => ({
+      ...prev,
       [questions[currentQuestion]._id]: option,
-    });
-
+    }));
   };
 
-  // -----------------------------
+  // ----------------------------
   // Next Question
-  // -----------------------------
+  // ----------------------------
 
   const nextQuestion = () => {
-
     if (currentQuestion < questions.length - 1) {
-
-      setCurrentQuestion(currentQuestion + 1);
-
+      setCurrentQuestion((prev) => prev + 1);
     }
-
   };
 
-  // -----------------------------
+  // ----------------------------
   // Previous Question
-  // -----------------------------
+  // ----------------------------
 
   const previousQuestion = () => {
-
     if (currentQuestion > 0) {
-
-      setCurrentQuestion(currentQuestion - 1);
-
+      setCurrentQuestion((prev) => prev - 1);
     }
-
   };
 
-  // -----------------------------
-  // Jump Question
-  // -----------------------------
-
-  const jumpQuestion = (index) => {
-
-    setCurrentQuestion(index);
-
-  };
-
-  // -----------------------------
+  // ----------------------------
   // Submit Quiz
-  // -----------------------------
+  // ----------------------------
 
   const submitQuiz = async () => {
-
     try {
-
       setSubmitting(true);
 
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      let score = 0;
+
+      const review = questions.map((q) => {
+        const studentAnswer = answers[q._id] || "Not Answered";
+
+        const isCorrect = studentAnswer === q.answer;
+
+        if (isCorrect) score++;
+
+        return {
+          question: q.question,
+          studentAnswer,
+          correctAnswer: q.answer,
+          isCorrect,
+        };
+      });
+
       const payload = {
-
+        studentName: user?.name || "Student",
         quizId,
-
-        answers,
-
+        score,
+        totalQuestions: questions.length,
+        answers: review,
       };
 
-      const res = await API.post(
-        "/results/submit",
-        payload
-      );
+      console.log("================================");
+      console.log("Submitting Result");
+      console.log(payload);
+      console.log("================================");
+
+      await API.post("/results", payload);
 
       navigate("/result", {
-        state: res.data,
+        state: {
+          studentName: user?.name || "Student",
+          score,
+          totalQuestions: questions.length,
+          answers: review,
+        },
       });
 
     } catch (err) {
-
       console.log(err);
+      console.log(err.response?.data);
 
-      alert("Submission Failed");
-
+      alert(
+        err.response?.data?.message ||
+        "Submission Failed"
+      );
     } finally {
-
       setSubmitting(false);
-
     }
-
   };
 
+  // ----------------------------
+  // Loading Screen
+  // ----------------------------
+
   if (loading) {
-
     return (
-
       <div className="quiz-loading">
-
         <div className="loader"></div>
-
         <h2>Loading Quiz...</h2>
-
       </div>
-
     );
-
   }
 
   const question = questions[currentQuestion];
-    return (
-    <div className="quiz-page">
+  return (
+  <div className="quiz-page">
 
-      {/* Animated Background */}
-      <div className="bg-animation">
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
+    {/* Animated Background */}
+
+    <div className="bg-animation">
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div className="quiz-container">
+
+      {/* Header */}
+
+      <div className="quiz-header">
+
+        <div>
+          <h1>📝 Quiz Platform</h1>
+          <p>Answer every question carefully.</p>
+        </div>
+
+        <div className="timer-box">
+          ⏱ {formatTime()}
+        </div>
+
       </div>
 
-      <div className="quiz-container">
+      {/* Progress */}
 
-        {/* Header */}
+      <div className="progress-section">
 
-        <div className="quiz-header">
+        <div className="progress-top">
 
-          <h1>Quiz Platform</h1>
+          <span>
+            Question {currentQuestion + 1} of {questions.length}
+          </span>
 
-          <div className="timer">
-            ⏱ {formatTime()}
-          </div>
+          <span>
+            {Math.round(
+              ((currentQuestion + 1) /
+                questions.length) *
+                100
+            )}
+            %
+          </span>
 
         </div>
 
-        {/* Progress */}
+        <div className="progress-bar">
 
-        <div className="progress-section">
-
-          <div className="progress-top">
-
-            <span>
-              Question {currentQuestion + 1} of {questions.length}
-            </span>
-
-            <span>
-              {Math.round(
+          <div
+            className="progress-fill"
+            style={{
+              width: `${
                 ((currentQuestion + 1) /
                   questions.length) *
-                  100
-              )}
-              %
-            </span>
-
-          </div>
-
-          <div className="progress-bar">
-
-            <div
-              className="progress-fill"
-              style={{
-                width: `${
-                  ((currentQuestion + 1) /
-                    questions.length) *
-                  100
-                }%`,
-              }}
-            ></div>
-
-          </div>
+                100
+              }%`,
+            }}
+          ></div>
 
         </div>
 
-        {/* Question */}
+      </div>
 
-        <div className="question-card">
+      {/* Question Card */}
 
-          <h2>{question.question}</h2>
+      <div className="question-card">
 
-          <div className="options">
+        <h2>{question.question}</h2>
 
-            {question.options.map(
-              (option, index) => (
-                <div
-                  key={index}
-                  className={`option ${
-                    answers[question._id] === option
-                      ? "selected"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    selectAnswer(option)
-                  }
-                >
-                  <div className="option-letter">
-                    {String.fromCharCode(
-                      65 + index
-                    )}
-                  </div>
+        <div className="options">
 
-                  <div className="option-text">
-                    {option}
-                  </div>
+          {question.options.map(
+            (option, index) => (
+
+              <div
+                key={index}
+                className={`option ${
+                  answers[question._id] === option
+                    ? "selected"
+                    : ""
+                }`}
+                onClick={() =>
+                  selectAnswer(option)
+                }
+              >
+
+                <div className="option-letter">
+
+                  {String.fromCharCode(
+                    65 + index
+                  )}
+
                 </div>
-              )
-            )}
 
-          </div>
+                <div className="option-text">
 
-        </div>
+                  {option}
 
-        {/* Navigation */}
+                </div>
 
-        <div className="navigation">
+              </div>
 
-          <button
-            className="prev-btn"
-            onClick={previousQuestion}
-            disabled={currentQuestion === 0}
-          >
-            ← Previous
-          </button>
-
-          {currentQuestion ===
-          questions.length - 1 ? (
-            <button
-              className="submit-btn"
-              onClick={submitQuiz}
-              disabled={submitting}
-            >
-              {submitting
-                ? "Submitting..."
-                : "Submit Quiz"}
-            </button>
-          ) : (
-            <button
-              className="next-btn"
-              onClick={nextQuestion}
-            >
-              Next →
-            </button>
+            )
           )}
 
         </div>
 
       </div>
 
+      {/* Navigation */}
+
+      <div className="navigation">
+
+        <button
+          className="prev-btn"
+          onClick={previousQuestion}
+          disabled={currentQuestion === 0}
+        >
+          ← Previous
+        </button>
+
+        {currentQuestion ===
+        questions.length - 1 ? (
+
+          <button
+            className="submit-btn"
+            onClick={submitQuiz}
+            disabled={submitting}
+          >
+            {submitting
+              ? "Submitting..."
+              : "Submit Quiz ✅"}
+          </button>
+
+        ) : (
+
+          <button
+            className="next-btn"
+            onClick={nextQuestion}
+          >
+            Next Question →
+          </button>
+
+        )}
+
+      </div>
+
     </div>
-  );
+
+  </div>
+);
+
 }
 
-export default Quiz;
+export default Quiz;  
